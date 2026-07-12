@@ -41,7 +41,7 @@ export function TestimonialsSection({ testimonials }: { testimonials: Testimonia
                   ))}
                 </div>
                 <p className="text-gray-600 text-sm font-light leading-relaxed mb-6 italic">
-                  "{t.content}"
+                  &ldquo;{t.content}&rdquo;
                 </p>
               </div>
 
@@ -145,7 +145,7 @@ export function ContactSection() {
               <span>Personal Concierge</span>
             </div>
             <h2 className="text-4xl sm:text-5xl font-serif font-bold text-white mb-6 leading-tight">
-              We're Here to Help
+              We&apos;re Here to Help
             </h2>
             <p className="text-white/70 font-light text-base sm:text-lg leading-relaxed mb-10 max-w-md">
               Have questions about membership or need bespoke assistance finding the perfect match? Our dedicated team is ready to guide you.
