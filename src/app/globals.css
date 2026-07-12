@@ -1,0 +1,296 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 38 52% 96%;         /* Warm Ivory #FAF6EF */
+    --foreground: 0 0% 37%;           /* Charcoal Gray #5F5F5F */
+    --card: 0 0% 100%;                /* Pure White */
+    --card-foreground: 0 0% 37%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 37%;
+    --primary: 349 71% 21%;           /* Royal Maroon #5A0F1D */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 46 65% 52%;          /* Royal Gold #D4AF37 */
+    --secondary-foreground: 36 100% 12%; /* #3B2300 */
+    --muted: 38 40% 93%;
+    --muted-foreground: 0 0% 46%;
+    --accent: 46 65% 52%;
+    --accent-foreground: 36 100% 12%;
+    --destructive: 0 66% 47%;         /* #C62828 */
+    --destructive-foreground: 0 0% 98%;
+    --border: 34 44% 84%;             /* Soft Beige #E9DAC6 */
+    --input: 34 44% 84%;
+    --ring: 46 65% 52%;
+    --radius: 0.75rem;
+
+    /* Saptapadi custom vars */
+    --gold: #D4AF37;
+    --gold-light: #F4D78C;
+    --gold-dark: #B8860B;
+    --maroon: #5A0F1D;
+    --maroon-light: #7A1E2C;
+    --maroon-dark: #2A0A0F;
+    --navy: #5A0F1D;      /* legacy alias, now maroon */
+    --navy-dark: #2A0A0F; /* legacy alias, now dark maroon */
+    --cream: #FAF6EF;
+    --cream-warm: #F8EBD5;
+    --beige: #E9DAC6;
+    --charcoal: #5F5F5F;
+    --success: #2E7D32;
+    --error: #C62828;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-serif;
+  }
+}
+
+@layer components {
+  /* ─── Glassmorphism ─────────────────────────────────────── */
+  .glass {
+    @apply backdrop-blur-md bg-white/10 border border-white/20;
+  }
+
+  .glass-dark {
+    @apply backdrop-blur-md bg-black/20 border border-white/10;
+  }
+
+  .glass-card {
+    @apply backdrop-blur-xl bg-white/80 border border-white/60 shadow-card;
+  }
+
+  /* ─── Luxury Card ─────────────────────────────────────── */
+  .luxury-card {
+    @apply rounded-2xl border border-gold/20 bg-white shadow-card hover:shadow-card-hover transition-all duration-300;
+  }
+
+  .luxury-card-dark {
+    @apply rounded-2xl bg-navy-dark/95 border border-gold/30 shadow-luxury;
+  }
+
+  /* ─── Gold Gradient Text ────────────────────────────────── */
+  .gold-text {
+    background: linear-gradient(135deg, #F7E39C 0%, #D4AF37 50%, #B8860B 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .navy-text {
+    background: linear-gradient(135deg, #2A0A0F 0%, #5A0F1D 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .maroon-text {
+    background: linear-gradient(135deg, #2A0A0F 0%, #5A0F1D 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ─── Premium Button ─────────────────────────────────── */
+  /* Secondary Button (gold) per brand spec: bg #D4AF37, text #3B2300, hover #B8860B */
+  .btn-gold {
+    @apply inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-sm tracking-wide;
+    @apply bg-[#D4AF37] text-[#3B2300] shadow-gold;
+    @apply hover:bg-[#B8860B] hover:shadow-gold-lg hover:scale-105 active:scale-95;
+    @apply transition-all duration-200;
+  }
+
+  /* Primary Button (maroon) per brand spec: bg #5A0F1D, text white, hover #7A1E2C */
+  .btn-navy {
+    @apply inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-sm tracking-wide;
+    @apply bg-[#5A0F1D] text-white shadow-navy;
+    @apply hover:bg-[#7A1E2C] hover:shadow-lg hover:scale-105 active:scale-95;
+    @apply transition-all duration-200;
+  }
+
+  .btn-maroon {
+    @apply btn-navy;
+  }
+
+  .btn-outline-gold {
+    @apply inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-sm tracking-wide;
+    @apply border-2 border-gold text-gold bg-transparent;
+    @apply hover:bg-gold hover:text-[#3B2300] hover:scale-105 active:scale-95;
+    @apply transition-all duration-200;
+  }
+
+  /* ─── Luxury Input ────────────────────────────────────── */
+  .luxury-input {
+    @apply w-full px-4 py-3 rounded-xl border border-gray-200 bg-white/50;
+    @apply focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold;
+    @apply text-navy-dark placeholder:text-gray-400;
+    @apply transition-all duration-200;
+  }
+
+  .luxury-select {
+    @apply luxury-input cursor-pointer;
+  }
+
+  /* ─── Badge ─────────────────────────────────────────── */
+  .badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold;
+  }
+
+  .badge-gold {
+    @apply badge bg-gold/10 text-gold-dark border border-gold/30;
+  }
+
+  .badge-navy {
+    @apply badge bg-navy/10 text-navy border border-navy/20;
+  }
+
+  .badge-green {
+    @apply badge bg-green-100 text-green-700 border border-green-200;
+  }
+
+  .badge-red {
+    @apply badge bg-red-100 text-red-700 border border-red-200;
+  }
+
+  .badge-yellow {
+    @apply badge bg-yellow-100 text-yellow-700 border border-yellow-200;
+  }
+
+  .badge-gray {
+    @apply badge bg-gray-100 text-gray-600 border border-gray-200;
+  }
+
+  /* ─── Gold Divider ─────────────────────────────────── */
+  .gold-divider {
+    @apply relative my-8;
+  }
+
+  .gold-divider::before {
+    content: '';
+    @apply absolute inset-x-0 top-1/2 h-px bg-gradient-to-r from-transparent via-gold to-transparent;
+  }
+
+  /* ─── Shimmer Loading ──────────────────────────────── */
+  .shimmer {
+    @apply bg-gradient-to-r from-gray-100 via-gray-50 to-gray-100;
+    background-size: 200% 100%;
+    @apply animate-shimmer;
+  }
+
+  /* ─── Scrollbar ────────────────────────────────────── */
+  .custom-scrollbar::-webkit-scrollbar {
+    @apply w-1.5;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-gold/40 rounded-full;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-gold/70;
+  }
+
+  /* ─── Admin Sidebar ────────────────────────────────── */
+  .sidebar-item {
+    @apply flex items-center gap-3 px-4 py-2.5 rounded-xl;
+    @apply text-sm font-medium text-white/60;
+    @apply hover:bg-white/10 hover:text-white;
+    @apply transition-all duration-200 cursor-pointer;
+  }
+
+  .sidebar-item-active {
+    @apply bg-gold/20 text-gold border border-gold/30;
+    @apply hover:bg-gold/25 hover:text-gold;
+  }
+
+  /* ─── Stats Card ─────────────────────────────────── */
+  .stat-card {
+    @apply luxury-card p-6 relative overflow-hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    @apply absolute top-0 right-0 w-32 h-32 rounded-full -translate-y-16 translate-x-16 opacity-5;
+    background: var(--gold);
+  }
+
+  /* ─── Table ─────────────────────────────────────── */
+  .data-table {
+    @apply w-full text-sm;
+  }
+
+  .data-table th {
+    @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider;
+    @apply text-gray-500 bg-gray-50 border-b border-gray-200;
+  }
+
+  .data-table td {
+    @apply px-4 py-3 border-b border-gray-100;
+  }
+
+  .data-table tr:hover td {
+    @apply bg-gold/5;
+  }
+
+  /* ─── Page Header ────────────────────────────────── */
+  .page-header {
+    @apply mb-8;
+  }
+
+  .page-header h1 {
+    @apply text-3xl font-bold text-navy-dark;
+  }
+
+  .page-header p {
+    @apply mt-1 text-gray-500;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Gold border gradient */
+  .border-gold-gradient {
+    border-image: linear-gradient(135deg, #F7E39C, #D4AF37, #B8860B) 1;
+  }
+
+  /* Maroon background variants (dark accent sections) */
+  .bg-navy-pattern {
+    background-color: #2A0A0F;
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(212, 175, 55, 0.16) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(90, 15, 29, 0.9) 0%, transparent 50%);
+  }
+
+  .bg-maroon-pattern {
+    background-color: #2A0A0F;
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(212, 175, 55, 0.16) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(90, 15, 29, 0.9) 0%, transparent 50%);
+  }
+
+  /* Ivory hero gradient per brand spec */
+  .bg-hero-ivory {
+    background: linear-gradient(135deg, #FAF6EF 0%, #F8EBD5 50%, #FFFFFF 100%);
+  }
+}
