@@ -118,7 +118,7 @@ export function HeroSection() {
       {/* Banner Carousel */}
       <div className="relative w-full">
         <div
-          className="relative w-full aspect-[3/1] min-h-[220px] overflow-hidden group"
+          className="relative w-full aspect-[2172/724] overflow-hidden group"
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
           onFocus={() => setPaused(true)}
