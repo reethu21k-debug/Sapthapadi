@@ -63,8 +63,8 @@ export function BiodataClient({ profile }: Props) {
             style={{ backgroundImage: "repeating-linear-gradient(45deg, #D4AF37 0, #D4AF37 1px, transparent 0, transparent 50%)", backgroundSize: "15px 15px" }}
           />
         </div>
-        <div className="px-6 pb-6">
-          <div className="flex items-end gap-4 -mt-10 mb-5">
+        <div className="px-4 sm:px-6 pb-6">
+          <div className="flex items-end gap-3 sm:gap-4 -mt-10 mb-5">
             <div className="w-20 h-20 rounded-2xl border-4 border-white shadow-card overflow-hidden bg-gold/10 flex items-center justify-center flex-shrink-0">
               {images?.profile_photo ? (
                 <img src={images.profile_photo} alt={fullName} className="w-full h-full object-cover" />
@@ -235,8 +235,8 @@ function Section({ title, icon: Icon, children }: {
 
 function Row({ label, value, masked }: { label: string; value: string; masked?: boolean }) {
   return (
-    <div className="flex gap-3">
-      <span className="text-gray-400 text-sm w-32 flex-shrink-0">{label}</span>
+    <div className="flex flex-col sm:flex-row gap-0.5 sm:gap-3">
+      <span className="text-gray-400 text-sm sm:w-32 flex-shrink-0">{label}</span>
       <span className={cn("text-sm flex-1", masked ? "text-gray-300 italic" : "text-navy-dark font-medium")}>
         {value}
       </span>

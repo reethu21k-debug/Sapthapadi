@@ -110,14 +110,14 @@ export default function SevenStepsJourney() {
       </div>
 
       {/* Timeline Container */}
-      <div className="relative max-w-3xl mx-auto pl-[56px] sm:pl-24">
+      <div className="relative max-w-3xl mx-auto pl-[48px] sm:pl-24">
         {/* Base Background Thread (Unlit) */}
-        <div className="absolute left-[28px] sm:left-10 top-6 bottom-12 w-[2px] bg-[#1a2540]/10 -translate-x-1/2 pointer-events-none" />
+        <div className="absolute left-[24px] sm:left-10 top-6 bottom-12 w-[2px] bg-[#1a2540]/10 -translate-x-1/2 pointer-events-none" />
 
         {/* Animated Golden Thread (Lit by Scroll Progress) */}
         <motion.div
           style={{ height: reduceMotion ? "100%" : threadHeight }}
-          className="absolute left-[28px] sm:left-10 top-6 w-[2px] bg-gradient-to-b from-[#C9982D] via-[#E8871E] to-[#A6193C] -translate-x-1/2 pointer-events-none origin-top shadow-[0_0_12px_rgba(201,152,45,0.6)]"
+          className="absolute left-[24px] sm:left-10 top-6 w-[2px] bg-gradient-to-b from-[#C9982D] via-[#E8871E] to-[#A6193C] -translate-x-1/2 pointer-events-none origin-top shadow-[0_0_12px_rgba(201,152,45,0.6)]"
         />
 
         <ol className="relative flex flex-col gap-8 sm:gap-10">
@@ -136,7 +136,7 @@ export default function SevenStepsJourney() {
                 className="group relative flex items-start cursor-default"
               >
                 {/* Ceremonial Knot Marker */}
-                <div className="absolute left-[-56px] sm:left-[-96px] top-1.5 z-10 flex items-center justify-center">
+                <div className="absolute left-[-48px] sm:left-[-96px] top-1.5 z-10 flex items-center justify-center">
                   {/* Expanding outer pulse ring on reveal/hover */}
                   <motion.div
                     animate={
@@ -148,16 +148,16 @@ export default function SevenStepsJourney() {
                           }
                     }
                     transition={{ duration: isHovered ? 0.3 : 3, repeat: isHovered ? 0 : Infinity, ease: "easeInOut" }}
-                    className="absolute w-14 h-14 sm:w-16 sm:h-16 rounded-full border border-[#C9982D]/40 bg-[#C9982D]/5"
+                    className="absolute w-11 h-11 sm:w-16 sm:h-16 rounded-full border border-[#C9982D]/40 bg-[#C9982D]/5"
                   />
 
                   {/* Main Knot Medallion */}
                   <motion.div
                     animate={reduceMotion ? {} : { scale: isHovered ? 1.08 : 1 }}
                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                    className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#1a2540] border-2 border-[#C9982D] shadow-md flex flex-col items-center justify-center transition-colors duration-300 group-hover:border-[#E8871E]"
+                    className="relative w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-[#1a2540] border-2 border-[#C9982D] shadow-md flex flex-col items-center justify-center transition-colors duration-300 group-hover:border-[#E8871E]"
                   >
-                    <span className="font-serif text-[#F3E5AB] text-base sm:text-lg font-semibold tracking-wider leading-none">
+                    <span className="font-serif text-[#F3E5AB] text-sm sm:text-lg font-semibold tracking-wider leading-none">
                       {step.numeral}
                     </span>
                     
@@ -177,9 +177,9 @@ export default function SevenStepsJourney() {
                 <motion.div
                   animate={reduceMotion ? {} : { x: isHovered ? 8 : 0 }}
                   transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                  className="w-full bg-[#fffdf9] border border-[#1a2540]/8 rounded-2xl p-6 sm:p-7 shadow-[0_4px_20px_-10px_rgba(26,37,64,0.06)] transition-all duration-300 group-hover:border-[#C9982D]/40 group-hover:shadow-[0_12px_30px_-12px_rgba(26,37,64,0.12)] group-hover:bg-white"
+                  className="w-full bg-[#fffdf9] border border-[#1a2540]/8 rounded-2xl p-4 sm:p-7 shadow-[0_4px_20px_-10px_rgba(26,37,64,0.06)] transition-all duration-300 group-hover:border-[#C9982D]/40 group-hover:shadow-[0_12px_30px_-12px_rgba(26,37,64,0.12)] group-hover:bg-white"
                 >
-                  <div className="flex items-center justify-between gap-4 mb-2">
+                  <div className="flex items-center justify-between gap-3 sm:gap-4 mb-2 flex-wrap">
                     <div className="flex items-center gap-2">
                       <span className="text-[#A6193C] text-xs font-bold uppercase tracking-[0.2em]">
                         {step.sanskrit}
@@ -191,10 +191,10 @@ export default function SevenStepsJourney() {
                     </div>
 
                     {/* Microanimation: Expanding ornamental line on card hover */}
-                    <span className="h-[1px] w-0 bg-gradient-to-r from-[#C9982D] to-transparent transition-all duration-500 ease-out group-hover:w-12 sm:group-hover:w-20" />
+                    <span className="h-[1px] w-0 bg-gradient-to-r from-[#C9982D] to-transparent transition-all duration-500 ease-out group-hover:w-12 sm:group-hover:w-20 hidden sm:block" />
                   </div>
 
-                  <h3 className="font-serif font-bold text-[#1a2540] text-xl sm:text-2xl tracking-tight mb-2.5 transition-colors duration-200 group-hover:text-[#C8631C]">
+                  <h3 className="font-serif font-bold text-[#1a2540] text-lg sm:text-2xl tracking-tight mb-2.5 transition-colors duration-200 group-hover:text-[#C8631C]">
                     {step.title}
                   </h3>
 

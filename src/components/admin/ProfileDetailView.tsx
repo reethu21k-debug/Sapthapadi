@@ -756,7 +756,7 @@ export function ProfileDetailView({ profile, subscription, accessList, auditLogs
 
               {accessList.length > 0 ? (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
+                  <table className="w-full min-w-[640px] text-left border-collapse">
                     <thead>
                       <tr className="border-b border-gray-100 bg-gray-50/60 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
                         <th className="py-3 px-5">Member / User</th>

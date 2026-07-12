@@ -103,14 +103,14 @@ export default async function ProfilesPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-serif font-bold text-navy-dark">Profiles</h1>
           <p className="text-gray-500 text-sm mt-1">
             {count ?? 0} total profiles
           </p>
         </div>
-        <Link href="/admin/profiles/create" className="btn-gold">
+        <Link href="/admin/profiles/create" className="btn-gold w-fit">
           <UserPlus className="w-4 h-4" />
           Add Profile
         </Link>

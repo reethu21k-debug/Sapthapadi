@@ -517,12 +517,12 @@ export function ProfilesTable({ profiles, total, page, limit, matchMeetingCounts
     <div className="luxury-card bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       <MatchMeetingPartnersModal profile={meetingsModalProfile} onClose={() => setMeetingsModalProfile(null)} />
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
+        <table className="w-full min-w-[860px] text-left border-collapse">
           <thead>
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id} className="border-b border-gray-150 bg-gray-50/80 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
                 {hg.headers.map((h) => (
-                  <th key={h.id} className="py-3.5 px-4 first:pl-6 last:pr-6">
+                  <th key={h.id} className="py-3.5 px-3 sm:px-4 first:pl-4 sm:first:pl-6 last:pr-4 sm:last:pr-6 whitespace-nowrap">
                     {flexRender(h.column.columnDef.header, h.getContext())}
                   </th>
                 ))}
@@ -537,7 +537,7 @@ export function ProfilesTable({ profiles, total, page, limit, matchMeetingCounts
                   className="hover:bg-gray-50/60 transition-colors group"
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="py-3 px-4 first:pl-6 last:pr-6">
+                    <td key={cell.id} className="py-3 px-3 sm:px-4 first:pl-4 sm:first:pl-6 last:pr-4 sm:last:pr-6">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   ))}

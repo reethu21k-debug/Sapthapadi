@@ -229,11 +229,11 @@ export function MatchMeetingsManager({ requests: initialRequests, totalCompleted
           </div>
           <div className="divide-y divide-gray-50">
             {requests.filter((r) => r.status === "completed").map((r) => (
-              <div key={String(r.id)} className="px-5 py-3 flex items-center justify-between gap-3 text-sm">
+              <div key={String(r.id)} className="px-5 py-3 flex flex-wrap items-center gap-2 sm:gap-3 text-sm">
                 <span className="font-medium text-navy-dark">{getPersonName(r)}</span>
-                <span className="text-gray-400">met</span>
-                <span className="font-medium text-navy-dark flex-1">{getProfileName(r)}</span>
-                <span className="text-xs text-gray-400">{formatDate(String(r.completed_at || r.updated_at))}</span>
+                <span className="text-gray-400 text-xs">met</span>
+                <span className="font-medium text-navy-dark flex-1 min-w-[100px]">{getProfileName(r)}</span>
+                <span className="text-xs text-gray-400 w-full sm:w-auto">{formatDate(String(r.completed_at || r.updated_at))}</span>
               </div>
             ))}
           </div>
@@ -270,7 +270,7 @@ export function MatchMeetingsManager({ requests: initialRequests, totalCompleted
         </div>
 
         <div className="overflow-x-auto mt-3">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full min-w-[760px] text-left border-collapse">
             <thead>
               <tr className="border-b border-gray-150 bg-gray-50/80 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
                 <th className="py-3.5 px-5">Member</th>

@@ -77,7 +77,7 @@ export function UsersManager({ users }: Props) {
 
       {/* Main Users Table */}
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
+        <table className="w-full min-w-[720px] text-left border-collapse">
           <thead>
             <tr className="border-b border-gray-150 bg-gray-50/80 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
               <th className="py-3.5 px-5">User & Contact</th>

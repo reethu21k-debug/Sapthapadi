@@ -183,10 +183,10 @@ export function UserProfileDetailView({
           </div>
 
           {/* Info */}
-          <div className="md:col-span-2 p-6">
-            <div className="flex items-start justify-between gap-4 mb-5">
+          <div className="md:col-span-2 p-4 sm:p-6">
+            <div className="flex items-start justify-between flex-wrap gap-4 mb-5">
               <div>
-                <h1 className="text-2xl font-serif font-bold text-navy-dark flex items-center gap-2">
+                <h1 className="text-xl sm:text-2xl font-serif font-bold text-navy-dark flex items-center gap-2">
                   {fullName || "—"}
                   {Boolean(profile.is_verified) && <VerifiedBadge />}
                 </h1>
@@ -220,7 +220,8 @@ export function UserProfileDetailView({
                     className="btn-gold py-2.5 px-4"
                   >
                     <FileDown className="w-4 h-4" />
-                    {isDownloading ? "Generating..." : "Download Biodata"}
+                    <span className="hidden sm:inline">{isDownloading ? "Generating..." : "Download Biodata"}</span>
+                    <span className="sm:hidden">{isDownloading ? "..." : "Biodata"}</span>
                   </button>
                 )}
               </div>
@@ -355,13 +356,13 @@ export function UserProfileDetailView({
       )}
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 border-b border-gray-200">
+      <div className="flex items-center gap-1 border-b border-gray-200 overflow-x-auto custom-scrollbar">
         {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              "flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-all",
+              "flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-all flex-shrink-0 whitespace-nowrap",
               activeTab === tab.id
                 ? "border-gold text-gold"
                 : "border-transparent text-gray-500 hover:text-gray-700"
@@ -480,8 +481,8 @@ function InfoRow({ label, value, icon, className }: {
   icon?: React.ReactNode; className?: string;
 }) {
   return (
-    <div className={cn("flex gap-3 py-1", className)}>
-      <span className="text-gray-400 text-sm w-36 flex-shrink-0">{label}</span>
+    <div className={cn("flex flex-col sm:flex-row gap-0.5 sm:gap-3 py-1", className)}>
+      <span className="text-gray-400 text-sm sm:w-36 flex-shrink-0">{label}</span>
       <span className="text-navy-dark text-sm font-medium flex-1 flex items-center gap-1.5">
         {icon}
         {value}

@@ -155,38 +155,40 @@ export default async function UserSubscriptionPage() {
           <div className="p-5 border-b border-gray-100">
             <h3 className="font-serif font-semibold text-navy-dark">Subscription History</h3>
           </div>
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Plan</th>
-                <th>Status</th>
-                <th>Start</th>
-                <th>Expiry</th>
-                <th>Amount</th>
-                <th>Mode</th>
-              </tr>
-            </thead>
-            <tbody>
-              {subscriptions.map((s) => (
-                <tr key={String(s.id)}>
-                  <td className="font-medium">{PLAN_LABELS[String(s.plan)] || String(s.plan)}</td>
-                  <td>
-                    <span className={cn("badge",
-                      s.status === "active" ? "badge-green" :
-                      s.status === "expired" ? "badge-red" :
-                      "badge-gray"
-                    )}>
-                      {String(s.status)}
-                    </span>
-                  </td>
-                  <td className="text-sm text-gray-600">{formatDate(String(s.start_date))}</td>
-                  <td className="text-sm text-gray-600">{formatDate(String(s.expiry_date))}</td>
-                  <td className="text-sm font-semibold">₹{Number(s.amount_paid).toLocaleString("en-IN")}</td>
-                  <td className="text-sm text-gray-500 capitalize">{String(s.payment_mode).replace(/_/g, " ")}</td>
+          <div className="overflow-x-auto">
+            <table className="data-table min-w-[640px]">
+              <thead>
+                <tr>
+                  <th>Plan</th>
+                  <th>Status</th>
+                  <th>Start</th>
+                  <th>Expiry</th>
+                  <th>Amount</th>
+                  <th>Mode</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {subscriptions.map((s) => (
+                  <tr key={String(s.id)}>
+                    <td className="font-medium">{PLAN_LABELS[String(s.plan)] || String(s.plan)}</td>
+                    <td>
+                      <span className={cn("badge",
+                        s.status === "active" ? "badge-green" :
+                        s.status === "expired" ? "badge-red" :
+                        "badge-gray"
+                      )}>
+                        {String(s.status)}
+                      </span>
+                    </td>
+                    <td className="text-sm text-gray-600">{formatDate(String(s.start_date))}</td>
+                    <td className="text-sm text-gray-600">{formatDate(String(s.expiry_date))}</td>
+                    <td className="text-sm font-semibold">₹{Number(s.amount_paid).toLocaleString("en-IN")}</td>
+                    <td className="text-sm text-gray-500 capitalize">{String(s.payment_mode).replace(/_/g, " ")}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

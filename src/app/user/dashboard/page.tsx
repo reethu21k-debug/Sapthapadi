@@ -38,7 +38,7 @@ export default async function UserDashboardPage() {
   return (
     <div className="space-y-8">
       {/* Welcome */}
-      <div className="bg-navy-gradient rounded-2xl p-6 relative overflow-hidden">
+      <div className="bg-navy-gradient rounded-2xl p-4 sm:p-6 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10"
           style={{ backgroundImage: "repeating-linear-gradient(45deg, #D4AF37 0, #D4AF37 1px, transparent 0, transparent 50%)", backgroundSize: "15px 15px" }}
         />
@@ -98,7 +98,7 @@ export default async function UserDashboardPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4">
         {[
           { icon: Users, label: "Shared Profiles", value: sharedCount?.length || 0, href: "/user/profiles", color: "text-blue-600 bg-blue-50" },
           { icon: Heart, label: "Favourites", value: favouriteCount?.length || 0, href: "/user/favorites", color: "text-pink-600 bg-pink-50" },
@@ -220,9 +220,9 @@ export default async function UserDashboardPage() {
               {recentNotifications.map((n) => (
                 <div key={n.id} className={`px-5 py-4 flex items-start gap-3 ${!n.is_read ? "bg-gold/5" : ""}`}>
                   <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${n.is_read ? "bg-gray-200" : "bg-gold"}`} />
-                  <div>
-                    <p className="text-sm font-medium text-navy-dark">{n.title}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{n.message}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-navy-dark truncate">{n.title}</p>
+                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{n.message}</p>
                     <p className="text-xs text-gray-300 mt-1">{formatDate(n.created_at)}</p>
                   </div>
                 </div>
@@ -257,12 +257,12 @@ export default async function UserDashboardPage() {
                         </div>
                       )}
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-navy-dark flex items-center gap-1">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-navy-dark flex items-center gap-1 truncate">
                         {name || "—"}
                         {Boolean(profile?.is_verified) && <VerifiedBadge size="sm" />}
                       </p>
-                      <p className="text-xs text-gold font-mono">{String(profile?.profile_id || "")}</p>
+                      <p className="text-xs text-gold font-mono truncate">{String(profile?.profile_id || "")}</p>
                     </div>
                   </div>
                 );

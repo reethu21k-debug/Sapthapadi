@@ -93,19 +93,19 @@ export default async function AdminDashboardPage() {
           <div className="divide-y divide-gray-50">
             {pendingProfiles && pendingProfiles.length > 0 ? (
               pendingProfiles.map((p) => (
-                <div key={p.id} className="px-5 py-4 flex items-center justify-between hover:bg-gold/5 transition-colors">
-                  <div>
-                    <p className="font-medium text-navy-dark text-sm">
+                <div key={p.id} className="px-5 py-4 flex items-center justify-between gap-3 hover:bg-gold/5 transition-colors">
+                  <div className="min-w-0">
+                    <p className="font-medium text-navy-dark text-sm truncate">
                       {(p.personal as { first_name?: string; last_name?: string })?.first_name}{" "}
                       {(p.personal as { first_name?: string; last_name?: string })?.last_name}
                     </p>
                     <p className="text-gray-400 text-xs">{p.profile_id}</p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-400 text-xs">{formatDate(p.created_at)}</span>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="text-gray-400 text-xs hidden sm:inline">{formatDate(p.created_at)}</span>
                     <a
                       href={`/admin/profiles/${p.id}`}
-                      className="text-xs text-gold hover:text-gold-dark font-medium"
+                      className="text-xs text-gold hover:text-gold-dark font-medium whitespace-nowrap"
                     >
                       Review →
                     </a>
@@ -136,16 +136,16 @@ export default async function AdminDashboardPage() {
                 created_at: string;
                 users?: { full_name?: string; email?: string } | null;
               }>).map((s) => (
-                <div key={s.id} className="px-5 py-4 flex items-center justify-between hover:bg-gold/5 transition-colors">
-                  <div>
-                    <p className="font-medium text-navy-dark text-sm">
+                <div key={s.id} className="px-5 py-4 flex items-center justify-between gap-3 hover:bg-gold/5 transition-colors">
+                  <div className="min-w-0">
+                    <p className="font-medium text-navy-dark text-sm truncate">
                       {s.users?.full_name || s.users?.email || "—"}
                     </p>
                     <p className="text-gray-400 text-xs capitalize">
                       {s.plan?.replace("_", " ")}
                     </p>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right flex-shrink-0">
                     <p className="text-sm font-semibold text-navy-dark">
                       ₹{s.amount_paid?.toLocaleString("en-IN")}
                     </p>
@@ -170,19 +170,19 @@ export default async function AdminDashboardPage() {
           <div className="divide-y divide-gray-50">
             {unverifiedProfiles && unverifiedProfiles.length > 0 ? (
               unverifiedProfiles.map((p) => (
-                <div key={p.id} className="px-5 py-4 flex items-center justify-between hover:bg-gold/5 transition-colors">
-                  <div>
-                    <p className="font-medium text-navy-dark text-sm">
+                <div key={p.id} className="px-5 py-4 flex items-center justify-between gap-3 hover:bg-gold/5 transition-colors">
+                  <div className="min-w-0">
+                    <p className="font-medium text-navy-dark text-sm truncate">
                       {(p.personal as { first_name?: string; last_name?: string })?.first_name}{" "}
                       {(p.personal as { first_name?: string; last_name?: string })?.last_name}
                     </p>
                     <p className="text-gray-400 text-xs">{p.profile_id}</p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-400 text-xs">{formatDate(p.created_at)}</span>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="text-gray-400 text-xs hidden sm:inline">{formatDate(p.created_at)}</span>
                     <a
                       href={`/admin/profiles/${p.id}`}
-                      className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                      className="text-xs text-blue-600 hover:text-blue-700 font-medium whitespace-nowrap"
                     >
                       Verify →
                     </a>

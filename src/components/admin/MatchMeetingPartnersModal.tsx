@@ -54,7 +54,7 @@ export function MatchMeetingPartnersModal({ profile, onClose }: Props) {
             exit={{ opacity: 0, scale: 0.95, y: 12 }}
             className="bg-white rounded-2xl w-full max-w-lg shadow-2xl z-10 overflow-hidden border border-gray-100 max-h-[85vh] flex flex-col"
           >
-            <div className="p-6 border-b border-gray-100 flex items-start justify-between gap-4 flex-shrink-0">
+            <div className="p-4 sm:p-6 border-b border-gray-100 flex items-start justify-between gap-4 flex-shrink-0">
               <div>
                 <h2 className="font-serif text-xl font-bold text-navy-dark flex items-center gap-2">
                   <HeartHandshake className="w-5 h-5 text-gold" /> Match Meetings
@@ -140,7 +140,7 @@ export function MatchMeetingPartnersModal({ profile, onClose }: Props) {
             </div>
 
             {partners.length > 0 && (
-              <div className={cn("px-6 py-3 border-t border-gray-100 bg-gray-50/60 flex-shrink-0")}>
+              <div className={cn("px-4 sm:px-6 py-3 border-t border-gray-100 bg-gray-50/60 flex-shrink-0")}>
                 <p className="text-xs font-semibold text-gray-500">
                   {partners.length} completed match {partners.length === 1 ? "meeting" : "meetings"}
                 </p>

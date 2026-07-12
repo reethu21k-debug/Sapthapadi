@@ -180,7 +180,7 @@ export function SubscriptionsManager({ subscriptions, users, plans }: Props) {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full min-w-[820px] text-left border-collapse">
             <thead>
               <tr className="border-b border-gray-150 bg-gray-50/80 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
                 <th className="py-3.5 px-5">Member</th>

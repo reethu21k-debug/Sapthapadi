@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -33,16 +34,48 @@ interface Props {
 export function AdminSidebar({ user }: Props) {
   const pathname = usePathname();
   const { sidebarOpen, toggleSidebar } = useUIStore();
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    setIsDesktop(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  // Desktop: sidebar is always visible, `sidebarOpen` toggles its width
+  // between expanded (256) and icon-only (76). Mobile: sidebar is a
+  // fixed-width (256) drawer that's either fully off-screen or fully
+  // on-screen, controlled by `x`, not width — so the two behaviors never
+  // fight over the same properties.
+  const width = isDesktop ? (sidebarOpen ? 256 : 76) : 256;
+  const x = isDesktop ? 0 : sidebarOpen ? 0 : -280;
 
   return (
-    <motion.aside
-      initial={false}
-      animate={{ width: sidebarOpen ? 256 : 76 }}
-      transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-      className="relative flex-shrink-0 bg-navy-dark border-r border-white/10 flex flex-col z-20 shadow-xl select-none"
-      style={{ minHeight: "100vh" }}
-      aria-expanded={sidebarOpen}
-    >
+    <>
+      {/* Mobile backdrop overlay */}
+      <AnimatePresence>
+        {sidebarOpen && !isDesktop && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={toggleSidebar}
+            className="fixed inset-0 bg-black/50 z-10"
+            aria-hidden="true"
+          />
+        )}
+      </AnimatePresence>
+
+      <motion.aside
+        initial={false}
+        animate={{ width, x }}
+        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+        className="fixed inset-y-0 left-0 lg:relative lg:flex-shrink-0 bg-navy-dark border-r border-white/10 flex flex-col z-20 shadow-xl select-none"
+        style={{ minHeight: "100vh" }}
+        aria-expanded={sidebarOpen}
+      >
       {/* Brand Header */}
       <div className="h-16 flex items-center px-4 border-b border-white/10 overflow-hidden">
         <Link 
@@ -194,6 +227,7 @@ export function AdminSidebar({ user }: Props) {
           <ChevronRight className="w-3.5 h-3.5" />
         )}
       </button>
-    </motion.aside>
+      </motion.aside>
+    </>
   );
 }

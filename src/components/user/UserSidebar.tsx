@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, Users, Heart, FileText, CreditCard, Bell, Heart as HeartIcon,
   CalendarHeart,
@@ -9,6 +11,7 @@ import {
 import { cn, getInitials } from "@/lib/utils";
 import { AppUser } from "@/types";
 import { VerifiedBadge } from "@/components/shared/VerifiedBadge";
+import { useUIStore } from "@/lib/store";
 
 const NAV_ITEMS = [
   { href: "/user/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -27,9 +30,47 @@ interface SidebarProps {
 
 export function UserSidebar({ user, profile }: SidebarProps) {
   const pathname = usePathname();
+  const { sidebarOpen, toggleSidebar } = useUIStore();
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    setIsDesktop(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  // Close the drawer automatically on navigation (mobile only).
+  useEffect(() => {
+    if (!isDesktop && sidebarOpen) toggleSidebar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
+  const x = isDesktop ? 0 : sidebarOpen ? 0 : -260;
 
   return (
-    <aside className="w-56 flex-shrink-0 bg-white border-r border-gray-100 flex flex-col min-h-screen">
+    <>
+      {/* Mobile backdrop overlay */}
+      <AnimatePresence>
+        {sidebarOpen && !isDesktop && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={toggleSidebar}
+            className="fixed inset-0 bg-black/50 z-10"
+            aria-hidden="true"
+          />
+        )}
+      </AnimatePresence>
+
+      <motion.aside
+        initial={false}
+        animate={{ x }}
+        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+        className="w-56 fixed inset-y-0 left-0 lg:relative lg:flex-shrink-0 bg-white border-r border-gray-100 flex flex-col min-h-screen z-20"
+      >
       {/* Logo */}
       <div className="h-16 flex items-center px-5 border-b border-gray-100">
         <Link href="/" className="flex items-center gap-2.5">
@@ -104,6 +145,7 @@ export function UserSidebar({ user, profile }: SidebarProps) {
           </div>
         </div>
       </div>
-    </aside>
+      </motion.aside>
+    </>
   );
 }
