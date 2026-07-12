@@ -71,7 +71,7 @@ function MarigoldNode({ number, accent }: { number: string; accent: "marigold" |
   const petals = Array.from({ length: 8 });
 
   return (
-    <div className="relative w-14 h-14 flex items-center justify-center">
+    <div className="relative w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 flex items-center justify-center">
       <motion.svg
         viewBox="0 0 100 100"
         className="absolute inset-0 w-full h-full drop-shadow-sm"
@@ -96,7 +96,7 @@ function MarigoldNode({ number, accent }: { number: string; accent: "marigold" |
       </motion.svg>
       <motion.span
         variants={numberVariants}
-        className="relative z-10 text-navy-dark font-bold text-sm tracking-wider"
+        className="relative z-10 text-navy-dark font-bold text-xs sm:text-sm tracking-wider"
       >
         {number}
       </motion.span>
@@ -170,7 +170,7 @@ function ScrollProgressDot() {
         transition={{ duration: 1.6, repeat: Infinity, ease: "easeOut" }}
       />
       <motion.div
-        className="relative w-3.5 h-3.5 rounded-full"
+        className="relative w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full"
         style={{ background: MARIGOLD, boxShadow: `0 0 10px 3px ${MARIGOLD}88` }}
         animate={{ scale: [1, 1.15, 1] }}
         transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
@@ -219,7 +219,7 @@ function SealMedallion({
   return (
     <motion.div
       variants={sealStampVariants}
-      className="relative w-[4.5rem] h-[4.5rem] flex items-center justify-center"
+      className="relative w-14 h-14 sm:w-16 sm:h-16 md:w-[4.5rem] md:h-[4.5rem] flex items-center justify-center"
       aria-hidden="true"
     >
       <svg
@@ -255,7 +255,7 @@ function SealMedallion({
         <circle cx="50" cy="50" r="27" fill="none" stroke="#faf9f6" strokeWidth="1" opacity="0.5" />
         <circle cx="50" cy="50" r="23" fill="none" stroke="#faf9f6" strokeWidth="1" strokeDasharray="1.5 3" opacity="0.4" />
       </svg>
-      <Icon className="relative z-10 w-6 h-6 text-[#faf9f6]" strokeWidth={1.5} />
+      <Icon className="relative z-10 w-5 h-5 sm:w-6 sm:h-6 text-[#faf9f6]" strokeWidth={1.5} />
     </motion.div>
   );
 }
@@ -277,7 +277,7 @@ function PostmarkStamp({
     <motion.div
       animate={{ rotate: reduceMotion ? -9 : isHovering ? -3 : -9 }}
       transition={{ type: "spring", stiffness: 260, damping: 16 }}
-      className="relative flex items-center justify-center w-14 h-14"
+      className="relative flex items-center justify-center w-11 h-11 sm:w-12 sm:h-12 md:w-14 md:h-14"
       aria-hidden="true"
     >
       <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full" style={{ color: `${accentColor}70` }}>
@@ -300,8 +300,8 @@ function PostmarkStamp({
         className="relative z-10 flex flex-col items-center justify-center leading-none"
         style={{ color: `${accentColor}c0` }}
       >
-        <span className="text-[6.5px] font-bold uppercase tracking-[0.2em]">Step</span>
-        <span className="font-serif text-lg font-semibold">{step}</span>
+        <span className="text-[5.5px] sm:text-[6.5px] font-bold uppercase tracking-[0.2em]">Step</span>
+        <span className="font-serif text-base sm:text-lg font-semibold">{step}</span>
       </div>
     </motion.div>
   );
@@ -329,7 +329,12 @@ function StepCard({ step, isEven }: StepCardProps) {
   };
 
   // Deckle-cut corner: bottom-left for even cards, bottom-right for odd
+  // Use a smaller clip notch on mobile so the cut doesn't eat too much of a narrow card
   const clipCorner = isEven
+    ? "polygon(0 0, 100% 0, 100% 100%, 20px 100%, 0 calc(100% - 20px))"
+    : "polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px)";
+
+  const clipCornerMd = isEven
     ? "polygon(0 0, 100% 0, 100% 100%, 28px 100%, 0 calc(100% - 28px))"
     : "polygon(28px 0, 100% 0, 100% calc(100% - 28px), calc(100% - 28px) 100%, 0 100%, 0 28px)";
 
@@ -350,16 +355,19 @@ function StepCard({ step, isEven }: StepCardProps) {
             }
       }
       transition={{ type: "spring", stiffness: 320, damping: 26 }}
-      className="group relative pt-20 pb-10 px-8 md:pt-24 md:pb-12 md:px-11 shadow-[0_8px_30px_-12px_rgba(26,37,64,0.14)] transition-shadow duration-500 overflow-hidden"
-      style={{
-        clipPath: clipCorner,
-        backgroundColor: "#fffdf9",
-        backgroundImage: "radial-gradient(rgba(26,37,64,0.05) 0.6px, transparent 0.6px)",
-        backgroundSize: "10px 10px",
-        boxShadow: isHovering
-          ? `0 26px 55px -16px ${accentColor}3d, 0 8px 30px -12px rgba(26,37,64,0.14)`
-          : undefined,
-      }}
+      className="group relative pt-14 pb-8 px-5 sm:pt-16 sm:pb-9 sm:px-7 md:pt-24 md:pb-12 md:px-11 shadow-[0_8px_30px_-12px_rgba(26,37,64,0.14)] transition-shadow duration-500 overflow-hidden [clip-path:var(--clip-sm)] md:[clip-path:var(--clip-md)]"
+      style={
+        {
+          "--clip-sm": clipCorner,
+          "--clip-md": clipCornerMd,
+          backgroundColor: "#fffdf9",
+          backgroundImage: "radial-gradient(rgba(26,37,64,0.05) 0.6px, transparent 0.6px)",
+          backgroundSize: "10px 10px",
+          boxShadow: isHovering
+            ? `0 26px 55px -16px ${accentColor}3d, 0 8px 30px -12px rgba(26,37,64,0.14)`
+            : undefined,
+        } as React.CSSProperties
+      }
     >
       {/* Cursor spotlight */}
       <div
@@ -371,23 +379,23 @@ function StepCard({ step, isEven }: StepCardProps) {
 
       {/* Hairline outer rule */}
       <div
-        className="absolute inset-[6px] pointer-events-none"
-        style={{ clipPath: clipCorner, border: `1px solid ${accentColor}30` }}
+        className="absolute inset-1 sm:inset-[6px] pointer-events-none [clip-path:var(--clip-sm)] md:[clip-path:var(--clip-md)]"
+        style={{ border: `1px solid ${accentColor}30` }}
       />
       {/* Inner dashed frame */}
       <div
-        className="absolute inset-3 pointer-events-none border border-dashed"
+        className="absolute inset-2 sm:inset-3 pointer-events-none border border-dashed"
         style={{ borderColor: `${accentColor}28` }}
       />
 
       {/* Postmark carrying the step number */}
-      <div className={`absolute top-6 ${isEven ? "right-7" : "left-7"} select-none pointer-events-none`}>
+      <div className={`absolute top-3 sm:top-4 md:top-6 ${isEven ? "right-4 sm:right-5 md:right-7" : "left-4 sm:left-5 md:left-7"} select-none pointer-events-none`}>
         <PostmarkStamp step={step.step} accentColor={accentColor} isHovering={isHovering} reduceMotion={reduceMotion} />
       </div>
 
-      <div className="relative z-10 flex flex-col items-center text-center gap-5">
+      <div className="relative z-10 flex flex-col items-center text-center gap-4 sm:gap-5">
         {/* Wax-seal medallion */}
-        <motion.div variants={cardContentVariants} className="relative -mt-12 md:-mt-16">
+        <motion.div variants={cardContentVariants} className="relative -mt-8 sm:-mt-10 md:-mt-16">
           <div
             className="absolute -inset-3 rounded-full opacity-0 group-hover:opacity-100 blur-lg transition-opacity duration-500 pointer-events-none"
             style={{ background: `${accentColor}30` }}
@@ -396,27 +404,27 @@ function StepCard({ step, isEven }: StepCardProps) {
         </motion.div>
 
         {/* Ornamental flanking rule */}
-        <motion.div variants={cardContentVariants} className="flex items-center gap-3 justify-center" aria-hidden="true">
+        <motion.div variants={cardContentVariants} className="flex items-center gap-2 sm:gap-3 justify-center" aria-hidden="true">
           <span
-            className="h-px w-8"
+            className="h-px w-6 sm:w-8"
             style={{ background: `linear-gradient(90deg, transparent, ${accentColor}90)` }}
           />
-          <span className="w-1.5 h-1.5 rotate-45" style={{ background: accentColor }} />
+          <span className="w-1.5 h-1.5 rotate-45 shrink-0" style={{ background: accentColor }} />
           <span
-            className="h-px w-8"
+            className="h-px w-6 sm:w-8"
             style={{ background: `linear-gradient(270deg, transparent, ${accentColor}90)` }}
           />
         </motion.div>
 
-        <motion.div variants={cardContentVariants} className="space-y-3 max-w-sm">
-          <h3 className="font-serif text-2xl lg:text-[1.75rem] font-semibold text-[#1a2540] tracking-tight">
+        <motion.div variants={cardContentVariants} className="space-y-2 sm:space-y-3 max-w-sm">
+          <h3 className="font-serif text-xl sm:text-2xl lg:text-[1.75rem] font-semibold text-[#1a2540] tracking-tight">
             {step.title}
           </h3>
-          <p className="text-gray-600 leading-relaxed text-[0.97rem]">{step.description}</p>
+          <p className="text-gray-600 leading-relaxed text-sm sm:text-[0.97rem]">{step.description}</p>
         </motion.div>
 
         {/* Single kalava-striped footer rule */}
-        <motion.div variants={cardContentVariants} className="flex items-center gap-2 pt-1 w-full max-w-[11rem]" aria-hidden="true">
+        <motion.div variants={cardContentVariants} className="flex items-center gap-2 pt-1 w-full max-w-[9rem] sm:max-w-[11rem]" aria-hidden="true">
           <span
             className="h-[2px] flex-1 rounded-full"
             style={{
@@ -461,25 +469,25 @@ export function HowItWorksSection() {
     "repeating-linear-gradient(45deg, #A6193C 0px, #A6193C 4px, #E8871E 4px, #E8871E 8px)";
 
   return (
-    <section className="relative py-24 lg:py-40 bg-[#faf9f6] overflow-hidden z-0">
+    <section className="relative py-16 sm:py-24 lg:py-40 bg-[#faf9f6] overflow-hidden z-0">
       {/* Subtle Abstract Background Elements */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <motion.div
           animate={{ scale: [1, 1.05, 1], opacity: [0.3, 0.5, 0.3] }}
           transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-[-5%] left-[-10%] w-[500px] h-[500px] rounded-full bg-gold/10 blur-[120px]"
+          className="absolute top-[-5%] left-[-10%] w-[260px] h-[260px] sm:w-[380px] sm:h-[380px] lg:w-[500px] lg:h-[500px] rounded-full bg-gold/10 blur-[80px] sm:blur-[120px]"
         />
         <motion.div
           animate={{ scale: [1, 1.1, 1], opacity: [0.2, 0.4, 0.2] }}
           transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-          className="absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] rounded-full bg-navy-dark/5 blur-[150px]"
+          className="absolute bottom-[-10%] right-[-5%] w-[320px] h-[320px] sm:w-[450px] sm:h-[450px] lg:w-[600px] lg:h-[600px] rounded-full bg-navy-dark/5 blur-[90px] sm:blur-[150px]"
         />
 
-        {/* Drifting marigold petal motes */}
+        {/* Drifting marigold petal motes — fewer/smaller on mobile to keep the section light */}
         {Array.from({ length: 6 }).map((_, i) => (
           <motion.div
             key={i}
-            className="absolute rounded-full"
+            className="absolute rounded-full hidden sm:block"
             style={{
               left: `${12 + i * 15}%`,
               top: `${10 + (i % 3) * 25}%`,
@@ -511,7 +519,7 @@ export function HowItWorksSection() {
           <motion.span
             animate={{ rotate: 360 }}
             transition={{ duration: 140, repeat: Infinity, ease: "linear" }}
-            className="text-[70vw] leading-none font-serif text-navy-dark select-none"
+            className="text-[90vw] sm:text-[70vw] leading-none font-serif text-navy-dark select-none"
             aria-hidden="true"
           >
             ॐ
@@ -521,40 +529,40 @@ export function HowItWorksSection() {
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* CENTERED HEADER */}
-        <div className="text-center max-w-3xl mx-auto mb-20 lg:mb-32">
+        <div className="text-center max-w-3xl mx-auto mb-14 sm:mb-20 lg:mb-32">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
-            <div className="inline-flex items-center gap-4 mb-6 justify-center">
+            <div className="inline-flex items-center gap-3 sm:gap-4 mb-5 sm:mb-6 justify-center">
               <motion.div
                 initial={{ width: 0 }}
-                whileInView={{ width: 48 }}
+                whileInView={{ width: 32 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
-                className="h-[1px] bg-gradient-to-r from-transparent to-gold-dark"
+                className="h-[1px] bg-gradient-to-r from-transparent to-gold-dark sm:!w-12"
               />
               <motion.span
                 initial={{ letterSpacing: "0em", opacity: 0 }}
                 whileInView={{ letterSpacing: "0.3em", opacity: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 1.5, ease: "easeOut" }}
-                className="text-gold-dark text-xs font-bold uppercase"
+                className="text-gold-dark text-[0.65rem] sm:text-xs font-bold uppercase whitespace-nowrap"
               >
                 The Process
               </motion.span>
               <motion.div
                 initial={{ width: 0 }}
-                whileInView={{ width: 48 }}
+                whileInView={{ width: 32 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
-                className="h-[1px] bg-gradient-to-r from-gold-dark to-transparent"
+                className="h-[1px] bg-gradient-to-r from-gold-dark to-transparent sm:!w-12"
               />
             </div>
 
-            <h2 className="text-5xl md:text-6xl lg:text-7xl font-serif font-bold text-navy-dark mb-4 tracking-tight leading-tight">
+            <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-serif font-bold text-navy-dark mb-3 sm:mb-4 tracking-tight leading-tight px-2">
               The Path to <br className="md:hidden" />
               <motion.span
                 className="italic font-light bg-clip-text text-transparent inline-block"
@@ -575,12 +583,12 @@ export function HowItWorksSection() {
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 1, delay: 0.3 }}
-              className="font-serif italic text-gold-dark/70 text-base mb-8 tracking-wide"
+              className="font-serif italic text-gold-dark/70 text-sm sm:text-base mb-6 sm:mb-8 tracking-wide px-4"
             >
               विवाह की ओर एक शुभ कदम
             </motion.p>
 
-            <p className="text-gray-500 text-lg leading-relaxed mb-10 max-w-2xl mx-auto">
+            <p className="text-gray-500 text-base sm:text-lg leading-relaxed mb-8 sm:mb-10 max-w-2xl mx-auto px-2">
               A seamless four-step journey designed to bring two families together.
               We handle the meticulous search, so you can focus entirely on the connection.
             </p>
@@ -602,7 +610,7 @@ export function HowItWorksSection() {
               />
               <Link
                 href="/register"
-                className="group relative inline-flex items-center gap-4 bg-navy-dark text-white px-10 py-4 rounded-full font-medium transition-all duration-300 hover:bg-gold-dark hover:shadow-2xl hover:shadow-gold/30 overflow-hidden"
+                className="group relative inline-flex items-center gap-2.5 sm:gap-4 bg-navy-dark text-white px-6 py-3 sm:px-10 sm:py-4 rounded-full font-medium text-sm sm:text-base transition-all duration-300 hover:bg-gold-dark hover:shadow-2xl hover:shadow-gold/30 overflow-hidden"
               >
                 <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out" />
                 <span className="relative z-10">Start Your Journey</span>
@@ -621,30 +629,30 @@ export function HowItWorksSection() {
         {/* TIMELINE LAYOUT */}
         <div ref={containerRef} className="relative max-w-5xl mx-auto pb-10">
           {/* Kalash cap at the start of the thread */}
-          <div className="absolute left-[28px] md:left-1/2 -top-8 -translate-x-1/2 z-10">
-            <KalashIcon className="w-9 h-9" />
+          <div className="absolute left-[20px] md:left-1/2 -top-7 sm:-top-8 -translate-x-1/2 z-10">
+            <KalashIcon className="w-7 h-7 sm:w-9 sm:h-9" />
           </div>
 
           {/* Background Thread */}
           <div
-            className="absolute left-[28px] md:left-1/2 top-4 bottom-4 w-[3px] md:-translate-x-1/2 z-0 opacity-25"
+            className="absolute left-[20px] md:left-1/2 top-4 bottom-4 w-[2px] sm:w-[3px] md:-translate-x-1/2 z-0 opacity-25"
             style={{ background: kalavaGradient }}
           />
 
           {/* Animated Scroll Thread */}
           <motion.div
             style={{ height: lineHeight, background: kalavaGradient }}
-            className="absolute left-[28px] md:left-1/2 top-4 w-[3px] md:-translate-x-1/2 z-0 origin-top shadow-[0_0_10px_rgba(200,160,80,0.5)]"
+            className="absolute left-[20px] md:left-1/2 top-4 w-[2px] sm:w-[3px] md:-translate-x-1/2 z-0 origin-top shadow-[0_0_10px_rgba(200,160,80,0.5)]"
           >
             <ScrollProgressDot />
           </motion.div>
 
           {/* Diya cap at the end of the thread */}
-          <div className="absolute left-[28px] md:left-1/2 -bottom-6 -translate-x-1/2 z-10">
-            <DiyaIcon className="w-10 h-8" />
+          <div className="absolute left-[20px] md:left-1/2 -bottom-5 sm:-bottom-6 -translate-x-1/2 z-10">
+            <DiyaIcon className="w-8 h-6 sm:w-10 sm:h-8" />
           </div>
 
-          <div className="space-y-16 md:space-y-24">
+          <div className="space-y-10 sm:space-y-16 md:space-y-24">
             {STEPS.map((step, index) => {
               const isEven = index % 2 === 0;
               const accentColor = step.accent === "marigold" ? MARIGOLD : SINDOOR;
@@ -656,7 +664,7 @@ export function HowItWorksSection() {
                     initial="rest"
                     whileHover="hover"
                     variants={nodeTriggerVariants}
-                    className="absolute left-[28px] md:left-1/2 -translate-x-1/2 z-20 cursor-default"
+                    className="absolute left-[20px] md:left-1/2 -translate-x-1/2 z-20 cursor-default"
                   >
                     <motion.div
                       initial={{ scale: 0 }}
@@ -684,14 +692,14 @@ export function HowItWorksSection() {
                     whileInView="visible"
                     viewport={{ once: true, margin: "-100px" }}
                     variants={{
-                      hidden: { opacity: 0, x: isEven ? -50 : 50 },
+                      hidden: { opacity: 0, x: isEven ? -30 : 30 },
                       visible: {
                         opacity: 1,
                         x: 0,
                         transition: { duration: 0.6, ease: "easeOut", staggerChildren: 0.1 },
                       },
                     }}
-                    className={`w-full pl-[88px] md:pl-0 md:w-[calc(50%-4rem)] ${
+                    className={`w-full pl-[52px] sm:pl-[64px] md:pl-0 md:w-[calc(50%-4rem)] ${
                       isEven ? "md:mr-auto" : "md:ml-auto"
                     }`}
                   >

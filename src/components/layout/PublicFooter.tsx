@@ -261,6 +261,23 @@ export function PublicFooter() {
           <p className="text-xs text-[#F7EFE1]/35 font-light tracking-wide">
             Uniting families, one union at a time.
           </p>
+          <a
+            href="https://stryvenix.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group inline-flex items-center gap-2 text-xs text-[#F7EFE1]/35 font-light tracking-wide transition-colors duration-300 hover:text-[#C9982D] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#C9982D]/60 rounded-sm"
+          >
+            <span>Crafted by</span>
+            {/* Logo sizing increased significantly here to h-12 w-48 */}
+            <span className="relative h-12 w-48">
+              <Image
+                src="/Stryvenix-Transparent-Logo1.png"
+                alt="Stryvenix"
+                fill
+                className="object-contain object-left opacity-70 transition-opacity duration-300 group-hover:opacity-100"
+              />
+            </span>
+          </a>
         </div>
       </div>
     </footer>
