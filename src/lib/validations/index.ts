@@ -104,6 +104,13 @@ export const educationSchema = z.object({
   additional_qualifications: z.string().optional(),
 });
 
+export const siblingSchema = z.object({
+  name: z.string().optional(),
+  marital_status: z.enum(["unmarried", "married", "divorced", "widowed"]).optional(),
+  occupation: z.string().optional(),
+  education: z.string().optional(),
+});
+
 export const familySchema = z.object({
   father_name: z.string().optional(),
   father_profession: z.string().optional(),
@@ -117,6 +124,7 @@ export const familySchema = z.object({
   sisters: z.number().min(0).default(0),
   married_brothers: z.number().min(0).default(0),
   married_sisters: z.number().min(0).default(0),
+  siblings: z.array(siblingSchema).optional(),
   family_type: z.enum(["joint", "nuclear"]).optional(),
   family_status: z.string().optional(),
   family_values: z.string().optional(),

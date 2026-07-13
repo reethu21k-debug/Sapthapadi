@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   User, MapPin, Phone, Briefcase, GraduationCap,
-  Users, Heart, Image as ImageIcon, FileText, ChevronRight, ChevronLeft, Save, Loader2, Sparkles, Check, FileDown, Home
+  Users, Heart, Image as ImageIcon, FileText, ChevronRight, ChevronLeft, Save, Loader2, Sparkles, Check, FileDown, Home, Plus, Trash2
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Profile } from "@/types";
@@ -543,8 +543,30 @@ function EducationSection({ data, onChange }: { data: Record<string, unknown>; o
   );
 }
 
+interface SiblingEntry {
+  name?: string;
+  marital_status?: string;
+  occupation?: string;
+  education?: string;
+}
+
 function FamilySection({ data, onChange }: { data: Record<string, unknown>; onChange: (d: Record<string, unknown>) => void }) {
   const update = (key: string, val: unknown) => onChange({ ...data, [key]: val });
+  const siblings = (data.siblings as SiblingEntry[]) || [];
+
+  const addSibling = () => {
+    update("siblings", [...siblings, { name: "", marital_status: "", occupation: "", education: "" }]);
+  };
+
+  const updateSibling = (index: number, key: keyof SiblingEntry, val: string) => {
+    const next = siblings.map((sib, i) => (i === index ? { ...sib, [key]: val } : sib));
+    update("siblings", next);
+  };
+
+  const removeSibling = (index: number) => {
+    update("siblings", siblings.filter((_, i) => i !== index));
+  };
+
   return (
     <div className="space-y-6">
       <div className="border-b border-[#1a2540]/10 pb-4">
@@ -579,6 +601,88 @@ function FamilySection({ data, onChange }: { data: Record<string, unknown>; onCh
           <label className={labelClass}>Family Property</label>
           <textarea className={inputClass} rows={2} value={(data.family_property as string) || ""} onChange={(e) => update("family_property", e.target.value)} placeholder="Own house, agricultural land, etc." />
         </div>
+      </div>
+
+      {/* Sibling Profiles */}
+      <div className="pt-2">
+        <div className="flex items-center justify-between mb-1">
+          <div>
+            <h3 className="font-serif text-base font-bold text-[#1a2540]">Sibling Profiles</h3>
+            <p className="text-xs font-light text-gray-500 mt-0.5">Add individual details for each brother or sister.</p>
+          </div>
+          <button
+            type="button"
+            onClick={addSibling}
+            className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#C8631C] border border-[#C8631C]/40 hover:bg-[#C8631C]/10 rounded-lg px-3 py-2 transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" /> Add Sibling
+          </button>
+        </div>
+
+        {siblings.length === 0 ? (
+          <p className="text-xs text-gray-400 font-light italic mt-3">No sibling profiles added yet.</p>
+        ) : (
+          <div className="space-y-4 mt-4">
+            {siblings.map((sibling, index) => (
+              <div key={index} className="relative border border-[#1a2540]/10 rounded-xl p-4 bg-[#1a2540]/[0.02]">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-[#1a2540]/60">Sibling {index + 1}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeSibling(index)}
+                    className="text-gray-400 hover:text-red-500 transition-colors"
+                    aria-label="Remove sibling"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className={sectionClass}>
+                  <div>
+                    <label className={labelClass}>Name</label>
+                    <input
+                      className={inputClass}
+                      value={sibling.name || ""}
+                      onChange={(e) => updateSibling(index, "name", e.target.value)}
+                      placeholder="Sibling's full name"
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Marital Status</label>
+                    <select
+                      className={inputClass}
+                      value={sibling.marital_status || ""}
+                      onChange={(e) => updateSibling(index, "marital_status", e.target.value)}
+                    >
+                      <option value="">Select</option>
+                      <option value="unmarried">Unmarried</option>
+                      <option value="married">Married</option>
+                      <option value="divorced">Divorced</option>
+                      <option value="widowed">Widowed</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelClass}>Occupation</label>
+                    <input
+                      className={inputClass}
+                      value={sibling.occupation || ""}
+                      onChange={(e) => updateSibling(index, "occupation", e.target.value)}
+                      placeholder="e.g. Software Engineer"
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Education</label>
+                    <input
+                      className={inputClass}
+                      value={sibling.education || ""}
+                      onChange={(e) => updateSibling(index, "education", e.target.value)}
+                      placeholder="e.g. B.Tech, MBA"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

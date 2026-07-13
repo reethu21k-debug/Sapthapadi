@@ -494,6 +494,17 @@ export async function generateBiodataPDF(profile: Profile): Promise<Buffer> {
     ["Native Place", family.native_place ?? "—"],
     ["Family Property", family.family_property ?? "—"],
   ];
+
+  (family.siblings ?? []).forEach((sibling, i) => {
+    const details = [
+      sibling.name,
+      sibling.marital_status ? sibling.marital_status.replace(/^\w/, (c) => c.toUpperCase()) : null,
+      sibling.occupation,
+      sibling.education,
+    ].filter(Boolean).join(", ");
+    familyData.push([`Sibling ${i + 1}`, details || "—"]);
+  });
+
   y = drawInfoTable(doc, familyData, y);
 
   // ─── Property Details ──────────────────────────────────────

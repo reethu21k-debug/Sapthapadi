@@ -92,6 +92,15 @@ export interface EducationDetails {
   additional_qualifications?: string;
 }
 
+export type SiblingMaritalStatus = "unmarried" | "married" | "divorced" | "widowed";
+
+export interface SiblingDetail {
+  name?: string;
+  marital_status?: SiblingMaritalStatus;
+  occupation?: string;
+  education?: string;
+}
+
 export interface FamilyDetails {
   father_name?: string;
   father_profession?: string;
@@ -105,6 +114,7 @@ export interface FamilyDetails {
   sisters: number;
   married_brothers: number;
   married_sisters: number;
+  siblings?: SiblingDetail[];
   family_type?: FamilyType;
   family_status?: string;
   family_values?: string;

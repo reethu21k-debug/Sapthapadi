@@ -438,6 +438,22 @@ export function UserProfileDetailView({
           <InfoRow label="Family Type" value={fam?.family_type ? titleCase(String(fam.family_type)) : "—"} />
           <InfoRow label="Family Status" value={fam?.family_status ? String(fam.family_status) : "—"} />
           <InfoRow label="Native Place" value={fam?.native_place ? String(fam.native_place) : "—"} />
+          {!!(fam?.siblings as Array<Record<string, unknown>>)?.length && (
+            <div className="md:col-span-2 pt-3 mt-2 border-t border-gray-100">
+              <h3 className="font-serif text-base font-bold text-navy-dark mb-3">Sibling Profiles</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {(fam!.siblings as Array<Record<string, unknown>>).map((sib, i) => (
+                  <div key={i} className="rounded-xl border border-gray-100 bg-gray-50/60 p-4">
+                    <p className="text-xs font-bold uppercase tracking-wider text-gold mb-2">Sibling {i + 1}</p>
+                    <InfoRow label="Name" value={sib.name ? String(sib.name) : "—"} />
+                    <InfoRow label="Marital Status" value={sib.marital_status ? titleCase(String(sib.marital_status)) : "—"} />
+                    <InfoRow label="Occupation" value={sib.occupation ? String(sib.occupation) : "—"} />
+                    <InfoRow label="Education" value={sib.education ? String(sib.education) : "—"} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

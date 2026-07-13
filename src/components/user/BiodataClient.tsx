@@ -175,6 +175,20 @@ export function BiodataClient({ profile }: Props) {
           <Row label="Sisters" value={`${fam?.sisters || 0} (${fam?.married_sisters || 0} married)`} />
           <Row label="Family Type" value={fam?.family_type ? titleCase(String(fam.family_type)) : "—"} />
           <Row label="Native Place" value={String(fam?.native_place || "—")} />
+          {(fam?.siblings as Array<Record<string, unknown>> | undefined)?.map((sib, i) => (
+            <Row
+              key={i}
+              label={`Sibling ${i + 1}`}
+              value={
+                [
+                  sib.name,
+                  sib.marital_status ? titleCase(String(sib.marital_status)) : null,
+                  sib.occupation,
+                  sib.education,
+                ].filter(Boolean).join(", ") || "—"
+              }
+            />
+          ))}
         </Section>
 
         {/* Partner Preferences */}
