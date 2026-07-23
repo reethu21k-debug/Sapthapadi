@@ -1,7 +1,8 @@
 {
-  "/manifest.webmanifest/route": "app/manifest.webmanifest/route.js",
-  "/page": "app/page.js",
-  "/(auth)/login/page": "app/(auth)/login/page.js",
-  "/admin/dashboard/page": "app/admin/dashboard/page.js",
-  "/admin/profiles/page": "app/admin/profiles/page.js"
+  "/admin/shared-profiles/page": "app/admin/shared-profiles/page.js",
+  "/user/profiles/page": "app/user/profiles/page.js",
+  "/user/profiles/[id]/page": "app/user/profiles/[id]/page.js",
+  "/user/favorites/page": "app/user/favorites/page.js",
+  "/admin/match-meetings/page": "app/admin/match-meetings/page.js",
+  "/user/match-meetings/page": "app/user/match-meetings/page.js"
 }

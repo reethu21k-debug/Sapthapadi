@@ -7,7 +7,11 @@ export const metadata: Metadata = { title: "Share Profiles" };
 export default async function SharedProfilesPage() {
   const supabase = await createClient();
 
-  const [{ data: accesses }, { data: users }, { data: profiles }] = await Promise.all([
+  const [
+    { data: accesses, error: accessesError },
+    { data: users, error: usersError },
+    { data: profiles, error: profilesError },
+  ] = await Promise.all([
     supabase
       .from("profile_access")
       .select("*, users!granted_to_user_id(full_name, email), profiles(profile_id, personal, images)")
@@ -15,7 +19,10 @@ export default async function SharedProfilesPage() {
       .limit(200),
     supabase
       .from("users")
-      .select("id, full_name, email, subscriptions(status, expiry_date, plan)")
+      // `subscriptions` has two FKs to `users` (user_id and created_by), so
+      // the embed must name the constraint explicitly or PostgREST returns
+      // an ambiguous-relationship error and `data` comes back null.
+      .select("id, full_name, email, subscriptions!subscriptions_user_id_fkey(status, expiry_date, plan)")
       .eq("role", "user")
       .eq("is_active", true),
     supabase
@@ -24,6 +31,10 @@ export default async function SharedProfilesPage() {
       .eq("status", "approved")
       .order("created_at", { ascending: false }),
   ]);
+
+  if (accessesError) console.error("[shared-profiles] accesses query error:", accessesError);
+  if (usersError) console.error("[shared-profiles] users query error:", usersError);
+  if (profilesError) console.error("[shared-profiles] profiles query error:", profilesError);
 
   return (
     <div className="space-y-6">
