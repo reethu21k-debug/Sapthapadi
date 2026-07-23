@@ -14,14 +14,31 @@ import toast from "react-hot-toast";
 import {
   Eye, Edit, Trash2, CheckCircle, XCircle, FileDown,
   ChevronLeft, ChevronRight, MoreVertical, Ban, RefreshCw,
-  BadgeCheck, ShieldOff, Loader2, Users, HeartHandshake,
+  BadgeCheck, ShieldOff, Loader2, Users, HeartHandshake, CreditCard, XOctagon,
 } from "lucide-react";
 import { Profile, AuditAction } from "@/types";
-import { formatDate, cn, STATUS_COLORS, titleCase, calculateAge } from "@/lib/utils";
+import { formatDate, cn, STATUS_COLORS, titleCase, calculateAge, PLAN_LABELS } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { VerifiedBadge } from "@/components/shared/VerifiedBadge";
 import { logAuditAction, notifyProfileOwner, sendBestEffortEmail } from "@/lib/audit";
 import { MatchMeetingPartnersModal } from "@/components/admin/MatchMeetingPartnersModal";
+import { AssignSubscriptionModal } from "@/components/admin/AssignSubscriptionModal";
+
+interface PlanOption {
+  id: string;
+  plan: string;
+  name: string;
+  price: number;
+  duration_days: number;
+  is_active: boolean;
+}
+
+interface SubscriptionSummary {
+  id: string;
+  plan: string;
+  status: string;
+  expiry_date: string;
+}
 
 interface Props {
   profiles: Profile[];
@@ -29,15 +46,35 @@ interface Props {
   page: number;
   limit: number;
   matchMeetingCounts?: Record<string, number>;
+  plans?: PlanOption[];
+  subscriptionsByProfile?: Record<string, SubscriptionSummary>;
 }
 
-export function ProfilesTable({ profiles, total, page, limit, matchMeetingCounts = {} }: Props) {
+// Either user_id or profile_id will be set — profile_id alone covers
+// admin-created profiles with no linked auth account.
+interface AssignTarget {
+  user_id?: string;
+  profile_id?: string;
+  full_name?: string;
+  email?: string;
+}
+
+export function ProfilesTable({
+  profiles,
+  total,
+  page,
+  limit,
+  matchMeetingCounts = {},
+  plans = [],
+  subscriptionsByProfile = {},
+}: Props) {
   const router = useRouter();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
   const menuBtnRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [meetingsModalProfile, setMeetingsModalProfile] = useState<Profile | null>(null);
+  const [assigningTarget, setAssigningTarget] = useState<AssignTarget | null>(null);
   const MENU_WIDTH = 192; // matches w-48
 
   const toggleMenu = (id: string) => {
@@ -202,14 +239,44 @@ export function ProfilesTable({ profiles, total, page, limit, matchMeetingCounts
     }
   };
 
+  const handleRemoveSubscription = async (profile: Profile, subscriptionId: string) => {
+    if (!confirm("Remove this subscription? The member will lose plan access immediately.")) return;
+    setActionLoading(profile.id + "subscription");
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("subscriptions")
+        .update({ status: "cancelled" })
+        .eq("id", subscriptionId);
+      if (error) throw error;
+      toast.success("Subscription removed");
+      logAuditAction({
+        action: "subscription_cancelled",
+        entityType: "subscription",
+        entityId: subscriptionId,
+        entityName: [profile.personal?.first_name, profile.personal?.last_name].filter(Boolean).join(" "),
+      });
+      router.refresh();
+    } catch {
+      toast.error("Failed to remove subscription.");
+    } finally {
+      setActionLoading(null);
+      setOpenMenu(null);
+    }
+  };
+
   const columns: ColumnDef<Profile>[] = [
     {
       accessorKey: "profile_id",
       header: "Profile ID",
       cell: ({ row }) => (
-        <span className="font-mono text-xs text-gold-dark font-bold tracking-wider uppercase bg-gold/10 px-2 py-1 rounded-md border border-gold/20">
+        <a
+          href={`/admin/profiles/${row.original.id}`}
+          className="font-mono text-xs text-gold-dark font-bold tracking-wider uppercase bg-gold/10 px-2 py-1 rounded-md border border-gold/20 hover:bg-gold hover:text-navy-dark transition-all inline-block"
+          title="Open full profile"
+        >
           {row.original.profile_id}
-        </span>
+        </a>
       ),
     },
     {
@@ -319,6 +386,26 @@ export function ProfilesTable({ profiles, total, page, limit, matchMeetingCounts
       },
     },
     {
+      id: "subscription",
+      header: "Subscription",
+      cell: ({ row }) => {
+        const sub = subscriptionsByProfile[row.original.id];
+        if (!sub) {
+          return <span className="text-[11px] text-gray-300 font-medium">No Plan</span>;
+        }
+        return (
+          <div>
+            <span className="px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-gold/10 text-gold-dark border border-gold/20 whitespace-nowrap inline-block">
+              {PLAN_LABELS[sub.plan] || sub.plan}
+            </span>
+            <p className="text-[10px] text-gray-400 mt-1 whitespace-nowrap">
+              Until {formatDate(sub.expiry_date)}
+            </p>
+          </div>
+        );
+      },
+    },
+    {
       id: "match_meetings",
       header: "Match Meetings",
       cell: ({ row }) => {
@@ -356,6 +443,7 @@ export function ProfilesTable({ profiles, total, page, limit, matchMeetingCounts
       cell: ({ row }) => {
         const p = row.original;
         const isLoading = actionLoading?.startsWith(p.id);
+        const activeSub = subscriptionsByProfile[p.id];
 
         return (
           <div className="flex items-center justify-end gap-1 relative">
@@ -473,6 +561,35 @@ export function ProfilesTable({ profiles, total, page, limit, matchMeetingCounts
                         </button>
                       )}
 
+                      {activeSub ? (
+                        <button
+                          onClick={() => handleRemoveSubscription(p, activeSub.id)}
+                          disabled={actionLoading === p.id + "subscription"}
+                          className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50/80 transition-colors text-left disabled:opacity-50"
+                        >
+                          <XOctagon className="w-3.5 h-3.5" /> Remove Subscription
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            // Assign a subscription either to the linked user
+                            // account (preferred, when one exists) or directly
+                            // to the profile itself (admin-created "shadow"
+                            // profiles with no auth account yet).
+                            setAssigningTarget({
+                              user_id: p.user_id || undefined,
+                              profile_id: p.id,
+                              full_name: [p.personal?.first_name, p.personal?.last_name].filter(Boolean).join(" "),
+                              email: p.contact?.email,
+                            });
+                            setOpenMenu(null);
+                          }}
+                          className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-sky-600 hover:bg-sky-50/80 transition-colors text-left"
+                        >
+                          <CreditCard className="w-3.5 h-3.5" /> Assign Subscription
+                        </button>
+                      )}
+
                       <a
                         href={`/api/biodata/${p.id}`}
                         target="_blank"
@@ -516,6 +633,12 @@ export function ProfilesTable({ profiles, total, page, limit, matchMeetingCounts
   return (
     <div className="luxury-card bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       <MatchMeetingPartnersModal profile={meetingsModalProfile} onClose={() => setMeetingsModalProfile(null)} />
+      <AssignSubscriptionModal
+        target={assigningTarget}
+        plans={plans}
+        onClose={() => setAssigningTarget(null)}
+        onAssigned={() => router.refresh()}
+      />
       <div className="overflow-x-auto">
         <table className="w-full min-w-[860px] text-left border-collapse">
           <thead>

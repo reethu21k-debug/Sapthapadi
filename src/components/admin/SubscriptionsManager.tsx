@@ -8,7 +8,6 @@ import {
   Plus, X, Loader2, CreditCard, AlertTriangle, 
   ShieldCheck, XOctagon, Clock, Receipt, User
 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 import {
   formatDate, getDaysRemaining, cn, STATUS_COLORS, PLAN_COLORS, PLAN_LABELS, titleCase,
 } from "@/lib/utils";
@@ -56,18 +55,25 @@ export function SubscriptionsManager({ subscriptions, users, plans }: Props) {
     }
     setIsLoading(true);
     try {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      const selectedPlan = plans.find((p) => String(p.id) === form.plan_config_id);
-
-      const { error } = await supabase.from("subscriptions").insert([{
-        ...form,
-        plan: selectedPlan?.plan,
-        status: "active",
-        created_by: user?.id,
-      }]);
-
-      if (error) throw error;
+      // Goes through the admin (service-role) API route rather than a
+      // direct client insert — inserting as the logged-in admin via the
+      // anon-key client is still subject to RLS, which was silently
+      // blocking these writes (same root cause as the read-side RLS bug
+      // documented on the Subscriptions/Profiles pages).
+      const res = await fetch("/api/subscriptions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: form.user_id,
+          plan_config_id: form.plan_config_id,
+          expiry_date: form.expiry_date ? new Date(form.expiry_date).toISOString() : undefined,
+          amount_paid: form.amount_paid,
+          payment_mode: form.payment_mode,
+          notes: form.notes || undefined,
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed to create subscription");
 
       toast.success("Subscription created successfully!");
       setShowModal(false);
@@ -82,12 +88,14 @@ export function SubscriptionsManager({ subscriptions, users, plans }: Props) {
   const handleCancel = async (id: string) => {
     if (!confirm("Are you sure you want to cancel this subscription? This will immediately revoke access.")) return;
     try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("subscriptions")
-        .update({ status: "cancelled" })
-        .eq("id", id);
-      if (error) throw error;
+      // Also routed through the admin API for the same RLS reason as above.
+      const res = await fetch("/api/subscriptions", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status: "cancelled" }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed to cancel subscription");
       toast.success("Subscription cancelled successfully");
       router.refresh();
     } catch {
@@ -196,9 +204,25 @@ export function SubscriptionsManager({ subscriptions, users, plans }: Props) {
               {subscriptions.length > 0 ? (
                 subscriptions.map((s) => {
                   const user = s.users as Record<string, unknown> | null;
+                  const profile = s.profiles as Record<string, unknown> | null;
+                  const profilePersonal = profile?.personal as Record<string, unknown> | undefined;
+                  const profileName = profilePersonal
+                    ? [profilePersonal.first_name, profilePersonal.last_name].filter(Boolean).join(" ")
+                    : "";
+
+                  // Prefer the linked user's name; fall back to the linked
+                  // profile's name (shadow profiles with no auth account);
+                  // only show "Unlinked Profile" if genuinely neither exists.
+                  const displayName = String(user?.full_name || profileName || "Unlinked Profile");
+                  const displaySubtitle = user?.email
+                    ? String(user.email)
+                    : profile
+                    ? `Profile ${String(profile.profile_id || "")}`
+                    : "No linked account";
+
                   const remaining = getDaysRemaining(s.expiry_date as string);
                   const isExpiring = remaining <= 30 && remaining > 0 && s.status === "active";
-                  const initial = String(user?.full_name || user?.email || "?")[0].toUpperCase();
+                  const initial = displayName[0]?.toUpperCase() || "?";
 
                   return (
                     <tr key={String(s.id)} className="hover:bg-gray-50/60 transition-colors group">
@@ -209,9 +233,9 @@ export function SubscriptionsManager({ subscriptions, users, plans }: Props) {
                           </div>
                           <div className="min-w-0">
                             <p className="font-semibold text-navy-dark text-sm truncate">
-                              {String(user?.full_name || "Unknown Member")}
+                              {displayName}
                             </p>
-                            <p className="text-xs text-gray-400 truncate">{String(user?.email || "No email")}</p>
+                            <p className="text-xs text-gray-400 truncate">{displaySubtitle}</p>
                           </div>
                         </div>
                       </td>

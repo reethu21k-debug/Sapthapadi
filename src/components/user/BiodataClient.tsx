@@ -6,7 +6,7 @@ import {
   FileDown, User, MapPin, Phone, Briefcase, GraduationCap,
   Users, Heart, CheckCircle, Clock, XCircle,
 } from "lucide-react";
-import { calculateAge, formatDate, formatHeight, formatIncome, titleCase, cn, STATUS_COLORS } from "@/lib/utils";
+import { calculateAge, formatDate, formatHeight, formatIncome, formatTimeOfBirth, titleCase, cn, STATUS_COLORS } from "@/lib/utils";
 import { VerifiedBadge } from "@/components/shared/VerifiedBadge";
 
 interface Props {
@@ -121,6 +121,7 @@ export function BiodataClient({ profile }: Props) {
         <Section title="Personal Details" icon={User}>
           <Row label="Date of Birth" value={personal?.date_of_birth ? formatDate(String(personal.date_of_birth)) : "—"} />
           <Row label="Age" value={personal?.date_of_birth ? `${calculateAge(String(personal.date_of_birth))} Years` : "—"} />
+          <Row label="Time of Birth" value={formatTimeOfBirth(personal?.time_of_birth as string | undefined)} />
           <Row label="Height" value={personal?.height_cm ? formatHeight(Number(personal.height_cm)) : "—"} />
           <Row label="Religion" value={String(personal?.religion || "—")} />
           <Row label="Caste" value={[personal?.caste, personal?.sub_caste].filter(Boolean).join(" / ") || "—"} />
@@ -129,7 +130,6 @@ export function BiodataClient({ profile }: Props) {
           <Row label="Rashi" value={String(personal?.rashi || "—")} />
           <Row label="Manglik" value={personal?.manglik ? titleCase(String(personal.manglik)) : "—"} />
           <Row label="Marital Status" value={personal?.marital_status ? titleCase(String(personal.marital_status).replace(/_/g, " ")) : "—"} />
-          <Row label="Mother Tongue" value={String(personal?.mother_tongue || "—")} />
           <Row label="Food Preference" value={personal?.food_preference ? titleCase(String(personal.food_preference).replace(/_/g, " ")) : "—"} />
         </Section>
 
@@ -173,8 +173,6 @@ export function BiodataClient({ profile }: Props) {
           <Row label="Mother" value={[fam?.mother_name, fam?.mother_profession].filter(Boolean).join(", ") || "—"} />
           <Row label="Brothers" value={`${fam?.brothers || 0} (${fam?.married_brothers || 0} married)`} />
           <Row label="Sisters" value={`${fam?.sisters || 0} (${fam?.married_sisters || 0} married)`} />
-          <Row label="Family Type" value={fam?.family_type ? titleCase(String(fam.family_type)) : "—"} />
-          <Row label="Native Place" value={String(fam?.native_place || "—")} />
           {(fam?.siblings as Array<Record<string, unknown>> | undefined)?.map((sib, i) => (
             <Row
               key={i}
@@ -201,13 +199,6 @@ export function BiodataClient({ profile }: Props) {
           <Row label="Caste" value={String(prefs?.caste || "No preference")} />
         </Section>
       </div>
-
-      {/* About Me */}
-      {!!profile.about_me && (
-        <Section title="About Me" icon={User}>
-          <p className="text-gray-600 text-sm leading-relaxed">{String(profile.about_me)}</p>
-        </Section>
-      )}
 
       {/* Photos */}
       <div className="luxury-card p-5">

@@ -398,6 +398,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../src/app/api/profiles/check-duplicate/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/profiles/check-duplicate">> = Specific
+  const handler = {} as typeof import("../../src/app/api/profiles/check-duplicate/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../src/app/api/subscriptions/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/subscriptions">> = Specific

@@ -8,7 +8,6 @@ export type Gender = "male" | "female";
 export type MaritalStatus = "never_married" | "divorced" | "widowed";
 export type BloodGroup = "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-";
 export type Manglik = "yes" | "no" | "anshik" | "dont_know";
-export type FamilyType = "joint" | "nuclear";
 export type FoodPreference = "vegetarian" | "non_vegetarian" | "vegan" | "eggetarian";
 export type EmploymentType = "salaried" | "self_employed" | "business" | "government" | "freelance" | "not_working";
 export type VisaStatus = "citizen" | "pr" | "work_permit" | "student" | "visit" | "na";
@@ -19,6 +18,9 @@ export type PaymentMode = "cash" | "upi" | "card" | "bank_transfer";
 export type UserRole = "admin" | "user";
 export type MatchMeetingStatus = "pending" | "accepted" | "rejected" | "completed" | "cancelled";
 
+/** Unit an admin enters annual income in. Storage is always absolute INR (see ProfessionDetails.annual_income). */
+export type IncomeUnit = "lpa" | "cr";
+
 // ─── Profile ─────────────────────────────────────────────────
 
 export interface PersonalDetails {
@@ -28,7 +30,13 @@ export interface PersonalDetails {
   gender: Gender;
   date_of_birth: string; // ISO date string
   place_of_birth?: string;
-  time_of_birth?: string; // e.g. "14:30" or "02:30 PM"
+  /**
+   * Always stored in 12-hour clock format, e.g. "02:30 PM".
+   * (Older records may still contain a bare 24-hour "HH:mm" string —
+   * see formatTimeOfBirth() in lib/utils, which normalizes either shape
+   * for display.)
+   */
+  time_of_birth?: string;
   age?: number; // computed
   height_cm: number;
   weight_kg?: number;
@@ -41,7 +49,6 @@ export interface PersonalDetails {
   nakshatram?: string;
   rashi?: string;
   manglik?: Manglik;
-  mother_tongue: string;
   languages_known: string[];
   marital_status: MaritalStatus;
   children?: number;
@@ -75,6 +82,7 @@ export interface ProfessionDetails {
   company_name?: string;
   company_location?: string;
   work_country?: string;
+  /** Always stored as an absolute annual figure in `income_currency` (e.g. INR). Use formatIncome()/LPA-CR helpers for display and data entry. */
   annual_income?: number;
   income_currency?: string;
   employment_type?: EmploymentType;
@@ -115,11 +123,7 @@ export interface FamilyDetails {
   married_brothers: number;
   married_sisters: number;
   siblings?: SiblingDetail[];
-  family_type?: FamilyType;
-  family_status?: string;
-  family_values?: string;
   family_property?: string;
-  native_place?: string;
 }
 
 export interface PropertyDetails {
@@ -197,7 +201,6 @@ export interface Profile {
   family: FamilyDetails;
   property: PropertyDetails;
   partner_preferences: PartnerPreferences;
-  about_me?: string;
 
   images: ProfileImages;
   documents: ProfileDocuments;
@@ -255,7 +258,11 @@ export interface SubscriptionPlanConfig {
 
 export interface Subscription {
   id: string;
-  user_id: string;
+  // Nullable: a subscription can be keyed off profile_id alone for
+  // admin-created profiles with no linked auth account yet. At least one
+  // of user_id / profile_id is always present — enforced by a DB check
+  // constraint (see migration 0006_nullable_subscription_user_id.sql).
+  user_id?: string;
   profile_id?: string;
   plan: SubscriptionPlan;
   plan_config_id: string;
@@ -524,6 +531,17 @@ export interface ApiResponse<T = unknown> {
   message?: string;
 }
 
+// ─── Duplicate Candidate Detection ─────────────────────────────
+
+/** A profile that matches an entered candidate's full name + date of birth. */
+export interface DuplicateCandidateMatch {
+  id: string;
+  profile_id: string;
+  full_name: string;
+  date_of_birth: string;
+  status: ProfileStatus;
+}
+
 // ─── Email Templates ──────────────────────────────────────────
 
 export type EmailTemplate =
@@ -556,7 +574,6 @@ export type ProfileFormSection =
   | "family"
   | "property"
   | "partner_preferences"
-  | "about"
   | "images"
   | "documents";
 
@@ -569,5 +586,4 @@ export interface ProfileFormData {
   family: Partial<FamilyDetails>;
   property: Partial<PropertyDetails>;
   partner_preferences: Partial<PartnerPreferences>;
-  about_me?: string;
 }

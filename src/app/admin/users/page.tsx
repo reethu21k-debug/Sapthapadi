@@ -16,13 +16,18 @@ export default async function UsersPage() {
     `)
     .order("created_at", { ascending: false });
 
+  const { data: plans } = await supabase
+    .from("subscription_plans")
+    .select("id, plan, name, price, duration_days, is_active")
+    .order("sort_order");
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-serif font-bold text-navy-dark">Users</h1>
         <p className="text-gray-500 text-sm mt-1">{users?.length || 0} registered users</p>
       </div>
-      <UsersManager users={users || []} />
+      <UsersManager users={users || []} plans={plans || []} />
     </div>
   );
 }

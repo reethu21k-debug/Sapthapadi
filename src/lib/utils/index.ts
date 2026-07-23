@@ -1,6 +1,7 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { differenceInYears, format, formatDistanceToNow } from "date-fns";
+import { IncomeUnit } from "@/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -27,6 +28,71 @@ export function getDaysRemaining(expiryDate: string): number {
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 }
 
+// ─── Time of Birth Utils (12-hour clock) ───────────────────────
+
+/**
+ * Normalizes a stored time-of-birth value for display. New records are
+ * always saved as "hh:mm AM/PM" (see ProfileForm's TimeOfBirthInput), but
+ * older records may still hold a bare 24-hour "HH:mm" string — this
+ * converts either shape into a consistent 12-hour display string.
+ */
+export function formatTimeOfBirth(time?: string | null): string {
+  if (!time) return "—";
+
+  // Already in 12-hour form, e.g. "02:30 PM"
+  if (/\s?(AM|PM)$/i.test(time.trim())) {
+    const [hm, period] = time.trim().split(/\s+/);
+    const [h, m] = hm.split(":");
+    return `${h.padStart(2, "0")}:${(m || "00").padStart(2, "0")} ${period.toUpperCase()}`;
+  }
+
+  // Legacy 24-hour "HH:mm"
+  const match = time.trim().match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return time;
+  let hour = parseInt(match[1], 10);
+  const minute = match[2];
+  const period = hour >= 12 ? "PM" : "AM";
+  hour = hour % 12;
+  if (hour === 0) hour = 12;
+  return `${String(hour).padStart(2, "0")}:${minute} ${period}`;
+}
+
+/** Splits a "hh:mm AM/PM" (or legacy 24h) string into parts for a 12-hour picker UI. */
+export function parseTimeOfBirth(time?: string | null): { hour: string; minute: string; period: "AM" | "PM" } {
+  const normalized = formatTimeOfBirth(time);
+  const match = normalized.match(/^(\d{2}):(\d{2}) (AM|PM)$/);
+  if (!match) return { hour: "", minute: "", period: "AM" };
+  return { hour: String(parseInt(match[1], 10)), minute: match[2], period: match[3] as "AM" | "PM" };
+}
+
+/** Builds a "hh:mm AM/PM" string from picker parts. Returns undefined if incomplete. */
+export function buildTimeOfBirth(hour: string, minute: string, period: "AM" | "PM"): string | undefined {
+  if (!hour || !minute) return undefined;
+  const h = parseInt(hour, 10);
+  if (Number.isNaN(h) || h < 1 || h > 12) return undefined;
+  return `${String(h).padStart(2, "0")}:${minute.padStart(2, "0")} ${period}`;
+}
+
+// ─── Income Utils (LPA / CR entry ↔ absolute INR storage) ──────
+
+const LAKH = 100_000;
+const CRORE = 10_000_000;
+
+/** Converts an admin-entered amount + unit into the absolute INR value that gets stored. */
+export function incomeToAbsolute(amount: number, unit: IncomeUnit): number {
+  if (!amount || amount < 0) return 0;
+  return unit === "cr" ? Math.round(amount * CRORE) : Math.round(amount * LAKH);
+}
+
+/** Converts a stored absolute INR value back into the best-fit amount + unit for editing. */
+export function absoluteToIncomeParts(value?: number | null): { amount: number | ""; unit: IncomeUnit } {
+  if (!value) return { amount: "", unit: "lpa" };
+  if (value >= CRORE) {
+    return { amount: Math.round((value / CRORE) * 100) / 100, unit: "cr" };
+  }
+  return { amount: Math.round((value / LAKH) * 100) / 100, unit: "lpa" };
+}
+
 // ─── Profile Utils ────────────────────────────────────────────
 
 export function formatHeight(cm: number): string {
@@ -44,11 +110,12 @@ export function formatCurrency(amount: number, currency = "INR"): string {
   }).format(amount);
 }
 
+/** Formats an absolute INR value as an LPA/CR string, e.g. "₹8.5 LPA" or "₹1.2 CR". */
 export function formatIncome(amount: number): string {
-  if (amount >= 10000000) {
-    return `₹${(amount / 10000000).toFixed(1)} Cr/year`;
-  } else if (amount >= 100000) {
-    return `₹${(amount / 100000).toFixed(1)} L/year`;
+  if (amount >= CRORE) {
+    return `₹${(amount / CRORE).toFixed(2).replace(/\.?0+$/, "")} CR/year`;
+  } else if (amount >= LAKH) {
+    return `₹${(amount / LAKH).toFixed(2).replace(/\.?0+$/, "")} LPA`;
   } else if (amount >= 1000) {
     return `₹${(amount / 1000).toFixed(0)}K/year`;
   }
@@ -59,14 +126,13 @@ export function calculateProfileCompletion(profile: Record<string, unknown>): nu
   const fields = [
     "personal.first_name", "personal.last_name", "personal.gender",
     "personal.date_of_birth", "personal.religion", "personal.caste",
-    "personal.mother_tongue", "personal.marital_status",
+    "personal.marital_status",
     "address.current_address", "address.district", "address.state",
     "contact.phone", "contact.email",
     "profession.profession",
     "education.highest_qualification",
     "family.father_name", "family.mother_name",
     "images.profile_photo",
-    "about_me",
   ];
 
   let filled = 0;
@@ -110,6 +176,11 @@ export function getInitials(name: string): string {
     .join("")
     .toUpperCase()
     .slice(0, 2);
+}
+
+/** Normalizes a full name for duplicate-candidate comparison (case/whitespace-insensitive). */
+export function normalizeNameForComparison(name: string): string {
+  return name.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
 // ─── Number Utils ─────────────────────────────────────────────

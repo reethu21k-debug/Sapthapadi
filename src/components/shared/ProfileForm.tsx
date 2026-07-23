@@ -1,15 +1,16 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   User, MapPin, Phone, Briefcase, GraduationCap,
-  Users, Heart, Image as ImageIcon, FileText, ChevronRight, ChevronLeft, Save, Loader2, Sparkles, Check, FileDown, Home, Plus, Trash2
+  Users, Heart, Image as ImageIcon, ChevronRight, ChevronLeft, Save, Loader2, Sparkles, FileDown, Plus, Trash2, AlertTriangle, ExternalLink
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { Profile } from "@/types";
+import { Profile, DuplicateCandidateMatch, IncomeUnit } from "@/types";
+import { incomeToAbsolute, absoluteToIncomeParts, buildTimeOfBirth, parseTimeOfBirth } from "@/lib/utils";
 
 const SECTIONS = [
   { id: "personal", label: "Personal", icon: User },
@@ -18,10 +19,8 @@ const SECTIONS = [
   { id: "profession", label: "Profession", icon: Briefcase },
   { id: "education", label: "Education", icon: GraduationCap },
   { id: "family", label: "Family", icon: Users },
-  { id: "property", label: "Property", icon: Home },
   { id: "partner", label: "Partner Prefs", icon: Heart },
   { id: "media", label: "Photos & Docs", icon: ImageIcon },
-  { id: "about", label: "About Me", icon: FileText },
 ];
 
 const inputClass = "w-full bg-white/80 border border-[#1a2540]/15 rounded-xl px-4 py-3 text-sm text-[#1a2540] placeholder:text-gray-400 focus:outline-none focus:border-[#C8631C] focus:ring-1 focus:ring-[#C8631C] transition-all duration-200 shadow-sm";
@@ -48,14 +47,81 @@ export function ProfileForm({ mode, profile, actor = "admin", redirectTo }: Prop
     profession: profile?.profession || {},
     education: profile?.education || {},
     family: profile?.family || {},
-    property: profile?.property || {},
     partner_preferences: profile?.partner_preferences || {},
-    about_me: profile?.about_me || "",
     visibility: profile?.visibility || {
       show_phone: false, show_email: false, show_address: false,
       show_family_details: false, show_income: false, show_documents: false,
     },
   });
+
+  // ─── Duplicate candidate detection ───────────────────────────
+  const [duplicateMatches, setDuplicateMatches] = useState<DuplicateCandidateMatch[]>([]);
+  const [isCheckingDuplicate, setIsCheckingDuplicate] = useState(false);
+  const duplicateCheckTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const personalData = formData.personal as Record<string, unknown>;
+  const firstName = (personalData.first_name as string) || "";
+  const lastName = (personalData.last_name as string) || "";
+  const dob = (personalData.date_of_birth as string) || "";
+
+  useEffect(() => {
+    if (duplicateCheckTimer.current) clearTimeout(duplicateCheckTimer.current);
+
+    if (!firstName.trim() || !lastName.trim() || !dob) {
+      setDuplicateMatches([]);
+      return;
+    }
+
+    duplicateCheckTimer.current = setTimeout(async () => {
+      setIsCheckingDuplicate(true);
+      try {
+        const res = await fetch("/api/profiles/check-duplicate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            first_name: firstName,
+            last_name: lastName,
+            date_of_birth: dob,
+            exclude_id: createdId,
+          }),
+        });
+        if (res.ok) {
+          const result = await res.json();
+          setDuplicateMatches(result.matches || []);
+        }
+      } catch {
+        // Live check is best-effort; silently skip on network errors.
+      } finally {
+        setIsCheckingDuplicate(false);
+      }
+    }, 600);
+
+    return () => {
+      if (duplicateCheckTimer.current) clearTimeout(duplicateCheckTimer.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firstName, lastName, dob, createdId]);
+
+  const checkDuplicateNow = async (): Promise<DuplicateCandidateMatch[]> => {
+    if (!firstName.trim() || !lastName.trim() || !dob) return [];
+    try {
+      const res = await fetch("/api/profiles/check-duplicate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          first_name: firstName,
+          last_name: lastName,
+          date_of_birth: dob,
+          exclude_id: createdId,
+        }),
+      });
+      if (!res.ok) return [];
+      const result = await res.json();
+      return result.matches || [];
+    } catch {
+      return [];
+    }
+  };
 
   const updateSection = (section: string, data: Record<string, unknown>) => {
     setFormData((prev) => ({ ...prev, [section]: data }));
@@ -64,6 +130,20 @@ export function ProfileForm({ mode, profile, actor = "admin", redirectTo }: Prop
   const defaultRedirect = actor === "admin" ? "/admin/profiles" : "/user/biodata";
 
   const handleSave = async (isDraft = false) => {
+    // Hard block: candidate matching an existing profile by exact full name
+    // + date of birth cannot be saved as a final (non-draft) submission.
+    if (!isDraft) {
+      const freshMatches = await checkDuplicateNow();
+      setDuplicateMatches(freshMatches);
+      if (freshMatches.length > 0) {
+        toast.error(
+          `This looks like a duplicate of an existing profile (${freshMatches[0].profile_id}). Resolve it before saving.`,
+          { duration: 6000 }
+        );
+        return;
+      }
+    }
+
     setIsSaving(true);
     try {
       const supabase = createClient();
@@ -177,6 +257,9 @@ export function ProfileForm({ mode, profile, actor = "admin", redirectTo }: Prop
               >
                 <section.icon className={`w-4 h-4 flex-shrink-0 ${activeSection === i ? "text-[#C8631C]" : "text-gray-400"}`} />
                 <span className="truncate">{section.label}</span>
+                {section.id === "personal" && duplicateMatches.length > 0 && (
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-500 ml-auto flex-shrink-0" />
+                )}
               </button>
             ))}
           </nav>
@@ -185,6 +268,35 @@ export function ProfileForm({ mode, profile, actor = "admin", redirectTo }: Prop
 
       {/* Form content */}
       <div className="flex-1 min-w-0">
+        {/* Duplicate candidate warning banner */}
+        {duplicateMatches.length > 0 && (
+          <div className="mb-5 rounded-2xl border border-amber-300 bg-amber-50 px-5 py-4 flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-amber-800">
+                Possible duplicate candidate{duplicateMatches.length > 1 ? "s" : ""} found
+              </p>
+              <p className="text-xs text-amber-700 mt-0.5">
+                Same full name and date of birth as {duplicateMatches.length === 1 ? "an existing profile" : "existing profiles"}. This must be resolved before the profile can be saved.
+              </p>
+              <ul className="mt-2 space-y-1">
+                {duplicateMatches.map((m) => (
+                  <li key={m.id}>
+                    <a
+                      href={`/admin/profiles/${m.id}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-800 hover:text-amber-900 underline underline-offset-2"
+                    >
+                      {m.full_name} — {m.profile_id} ({m.status}) <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
+
         <AnimatePresence mode="wait">
           <motion.div
             key={activeSection}
@@ -194,16 +306,20 @@ export function ProfileForm({ mode, profile, actor = "admin", redirectTo }: Prop
             transition={{ duration: 0.25, ease: "easeOut" }}
           >
             <div className="bg-[#fffdf9] border border-[#1a2540]/10 rounded-2xl p-6 sm:p-8 shadow-[0_12px_40px_-12px_rgba(26,37,64,0.1)]">
-              {activeSection === 0 && <PersonalSection data={formData.personal as Record<string, unknown>} onChange={(d) => updateSection("personal", d)} />}
+              {activeSection === 0 && (
+                <PersonalSection
+                  data={formData.personal as Record<string, unknown>}
+                  onChange={(d) => updateSection("personal", d)}
+                  isCheckingDuplicate={isCheckingDuplicate}
+                />
+              )}
               {activeSection === 1 && <AddressSection data={formData.address as Record<string, unknown>} onChange={(d) => updateSection("address", d)} />}
               {activeSection === 2 && <ContactSection data={formData.contact as Record<string, unknown>} onChange={(d) => updateSection("contact", d)} />}
               {activeSection === 3 && <ProfessionSection data={formData.profession as Record<string, unknown>} onChange={(d) => updateSection("profession", d)} />}
               {activeSection === 4 && <EducationSection data={formData.education as Record<string, unknown>} onChange={(d) => updateSection("education", d)} />}
               {activeSection === 5 && <FamilySection data={formData.family as Record<string, unknown>} onChange={(d) => updateSection("family", d)} />}
-              {activeSection === 6 && <PropertySection data={formData.property as Record<string, unknown>} onChange={(d) => updateSection("property", d)} />}
-              {activeSection === 7 && <PartnerSection data={formData.partner_preferences as Record<string, unknown>} onChange={(d) => updateSection("partner_preferences", d)} />}
-              {activeSection === 8 && <MediaSection data={formData as Record<string, unknown>} onChange={(d) => setFormData(prev => ({ ...prev, ...d }))} profileId={createdId} />}
-              {activeSection === 9 && <AboutSection data={formData.about_me as string} onChange={(v) => setFormData(prev => ({ ...prev, about_me: v }))} />}
+              {activeSection === 6 && <PartnerSection data={formData.partner_preferences as Record<string, unknown>} onChange={(d) => updateSection("partner_preferences", d)} />}
+              {activeSection === 7 && <MediaSection data={formData as Record<string, unknown>} onChange={(d) => setFormData(prev => ({ ...prev, ...d }))} profileId={createdId} />}
             </div>
           </motion.div>
         </AnimatePresence>
@@ -251,8 +367,9 @@ export function ProfileForm({ mode, profile, actor = "admin", redirectTo }: Prop
             ) : (
               <button
                 onClick={() => handleSave(false)}
-                disabled={isSaving}
-                className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C59B27] text-[#1a2540] hover:opacity-95 px-8 py-3 rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg transition-all duration-200"
+                disabled={isSaving || duplicateMatches.length > 0}
+                title={duplicateMatches.length > 0 ? "Resolve the duplicate candidate warning above before saving" : undefined}
+                className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C59B27] text-[#1a2540] hover:opacity-95 px-8 py-3 rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 fill-current" />}
                 {mode === "create"
@@ -269,21 +386,125 @@ export function ProfileForm({ mode, profile, actor = "admin", redirectTo }: Prop
 
 function calculateCompletion(data: Record<string, unknown>): number {
   const personal = data.personal as Record<string, unknown> || {};
-  const fields = ["first_name", "last_name", "gender", "date_of_birth", "religion", "caste", "mother_tongue", "marital_status"];
+  const fields = ["first_name", "last_name", "gender", "date_of_birth", "religion", "caste", "marital_status"];
   const filled = fields.filter((f) => personal[f]).length;
   return Math.round((filled / fields.length) * 100);
 }
 
 // ─── Section Components ───────────────────────────────────────
 
-function PersonalSection({ data, onChange }: { data: Record<string, unknown>; onChange: (d: Record<string, unknown>) => void }) {
+/** 12-hour time-of-birth picker: hour (1–12) / minute (00–59) / AM-PM. Stores "hh:mm AM/PM". */
+function TimeOfBirthInput({ value, onChange }: { value?: string; onChange: (v: string | undefined) => void }) {
+  const parts = parseTimeOfBirth(value);
+  const [hour, setHour] = useState(parts.hour);
+  const [minute, setMinute] = useState(parts.minute);
+  const [period, setPeriod] = useState<"AM" | "PM">(parts.period);
+
+  const commit = (h: string, m: string, p: "AM" | "PM") => {
+    onChange(buildTimeOfBirth(h, m, p));
+  };
+
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      <select
+        className={inputClass}
+        value={hour}
+        onChange={(e) => { setHour(e.target.value); commit(e.target.value, minute, period); }}
+      >
+        <option value="">Hour</option>
+        {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
+          <option key={h} value={h}>{String(h).padStart(2, "0")}</option>
+        ))}
+      </select>
+      <select
+        className={inputClass}
+        value={minute}
+        onChange={(e) => { setMinute(e.target.value); commit(hour, e.target.value, period); }}
+      >
+        <option value="">Min</option>
+        {Array.from({ length: 60 }, (_, i) => i).map((m) => (
+          <option key={m} value={String(m).padStart(2, "0")}>{String(m).padStart(2, "0")}</option>
+        ))}
+      </select>
+      <select
+        className={inputClass}
+        value={period}
+        onChange={(e) => { const p = e.target.value as "AM" | "PM"; setPeriod(p); commit(hour, minute, p); }}
+      >
+        <option value="AM">AM</option>
+        <option value="PM">PM</option>
+      </select>
+    </div>
+  );
+}
+
+/**
+ * Annual income entry as an amount + LPA/CR unit; converts to/from the absolute
+ * INR value that gets stored.
+ *
+ * FIX: previously used a flex row (`flex gap-2`) with the amount <input> given
+ * no sizing class and the unit <select> locked to `w-28 flex-shrink-0`. As a
+ * flex item with no explicit flex-basis, a `type="number"` input's min-content
+ * width can collapse down to roughly the width of its spin-button arrows in
+ * some browser/build combinations, even after adding `flex-1 min-w-0` — the
+ * two properties intersect through flex-basis resolution rules that aren't
+ * consistently reliable for number inputs specifically.
+ *
+ * Switched to an explicit CSS Grid layout instead: `grid-cols-[1fr_7rem]`
+ * hard-defines the amount column as "all remaining space" and the unit
+ * column as a fixed 7rem (112px, matching the old w-28), independent of
+ * either child's own content-based sizing. This sidesteps the flex
+ * min-content collapse entirely.
+ */
+function IncomeInput({ value, onChange, placeholder = "8" }: { value?: number; onChange: (absolute: number | undefined) => void; placeholder?: string }) {
+  const initial = absoluteToIncomeParts(value);
+  const [amount, setAmount] = useState<string>(initial.amount === "" ? "" : String(initial.amount));
+  const [unit, setUnit] = useState<IncomeUnit>(initial.unit);
+
+  const commit = (amt: string, u: IncomeUnit) => {
+    if (amt === "") {
+      onChange(undefined);
+      return;
+    }
+    const n = Number(amt);
+    if (Number.isNaN(n)) return;
+    onChange(incomeToAbsolute(n, u));
+  };
+
+  return (
+    <div className="grid grid-cols-[1fr_7rem] gap-2">
+      <input
+        className={inputClass}
+        type="number"
+        min={0}
+        step="0.01"
+        value={amount}
+        onChange={(e) => { setAmount(e.target.value); commit(e.target.value, unit); }}
+        placeholder={placeholder}
+      />
+      <select
+        className={inputClass}
+        value={unit}
+        onChange={(e) => { const u = e.target.value as IncomeUnit; setUnit(u); commit(amount, u); }}
+      >
+        <option value="lpa">LPA</option>
+        <option value="cr">CR</option>
+      </select>
+    </div>
+  );
+}
+
+function PersonalSection({ data, onChange, isCheckingDuplicate }: { data: Record<string, unknown>; onChange: (d: Record<string, unknown>) => void; isCheckingDuplicate?: boolean }) {
   const update = (key: string, val: unknown) => onChange({ ...data, [key]: val });
 
   return (
     <div className="space-y-6">
       <div className="border-b border-[#1a2540]/10 pb-4">
         <h2 className="font-serif text-2xl font-bold text-[#1a2540]">Personal Details</h2>
-        <p className="text-xs font-light text-gray-500 mt-1">Basic identification and ceremonial attributes.</p>
+        <p className="text-xs font-light text-gray-500 mt-1">
+          Basic identification and ceremonial attributes.
+          {isCheckingDuplicate && <span className="ml-2 text-[#C8631C] italic">Checking for duplicates…</span>}
+        </p>
       </div>
       <div className={sectionClass}>
         <div>
@@ -316,7 +537,7 @@ function PersonalSection({ data, onChange }: { data: Record<string, unknown>; on
         </div>
         <div>
           <label className={labelClass}>Time of Birth</label>
-          <input className={inputClass} type="time" value={(data.time_of_birth as string) || ""} onChange={(e) => update("time_of_birth", e.target.value)} />
+          <TimeOfBirthInput value={data.time_of_birth as string} onChange={(v) => update("time_of_birth", v)} />
         </div>
         <div>
           <label className={labelClass}>Height (cm) *</label>
@@ -373,10 +594,6 @@ function PersonalSection({ data, onChange }: { data: Record<string, unknown>; on
             <option value="anshik">Anshik (Partial)</option>
             <option value="dont_know">Don&apos;t Know</option>
           </select>
-        </div>
-        <div>
-          <label className={labelClass}>Mother Tongue *</label>
-          <input className={inputClass} value={(data.mother_tongue as string) || ""} onChange={(e) => update("mother_tongue", e.target.value)} placeholder="Telugu" />
         </div>
         <div>
           <label className={labelClass}>Languages Known</label>
@@ -483,8 +700,8 @@ function ProfessionSection({ data, onChange }: { data: Record<string, unknown>; 
         <div><label className={labelClass}>Company Location</label><input className={inputClass} value={(data.company_location as string) || ""} onChange={(e) => update("company_location", e.target.value)} /></div>
         <div><label className={labelClass}>Work Country</label><input className={inputClass} value={(data.work_country as string) || ""} onChange={(e) => update("work_country", e.target.value)} /></div>
         <div>
-          <label className={labelClass}>Annual Income (₹)</label>
-          <input className={inputClass} type="number" value={(data.annual_income as number) || ""} onChange={(e) => update("annual_income", Number(e.target.value))} placeholder="800000" />
+          <label className={labelClass}>Annual Income</label>
+          <IncomeInput value={data.annual_income as number} onChange={(v) => update("annual_income", v)} />
         </div>
         <div>
           <label className={labelClass}>Employment Type</label>
@@ -543,11 +760,54 @@ function EducationSection({ data, onChange }: { data: Record<string, unknown>; o
   );
 }
 
+/** e.g. "elder_brother", "younger_sister" — order + gender of the sibling relative to the candidate. */
+type SiblingRelation = "elder_brother" | "younger_brother" | "elder_sister" | "younger_sister";
+
 interface SiblingEntry {
   name?: string;
+  relation?: SiblingRelation;
   marital_status?: string;
   occupation?: string;
   education?: string;
+}
+
+const SIBLING_RELATION_OPTIONS: { value: SiblingRelation; label: string }[] = [
+  { value: "elder_brother", label: "Elder Brother" },
+  { value: "younger_brother", label: "Younger Brother" },
+  { value: "elder_sister", label: "Elder Sister" },
+  { value: "younger_sister", label: "Younger Sister" },
+];
+
+const SIBLING_RELATION_LABELS: Record<SiblingRelation, string> = {
+  elder_brother: "Elder Brother",
+  younger_brother: "Younger Brother",
+  elder_sister: "Elder Sister",
+  younger_sister: "Younger Sister",
+};
+
+function ordinal(n: number): string {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
+/**
+ * Builds a display label like "1st Elder Brother" or "2nd Younger Sister"
+ * for the sibling at `index`, based on how many siblings *before* it in the
+ * list share the same relation. Siblings with no relation set yet just get
+ * a plain "Sibling N" fallback so the card header never looks broken while
+ * mid-edit.
+ */
+function siblingDisplayLabel(siblings: SiblingEntry[], index: number): string {
+  const current = siblings[index];
+  if (!current?.relation) return `Sibling ${index + 1}`;
+
+  let countSoFar = 0;
+  for (let i = 0; i <= index; i++) {
+    if (siblings[i]?.relation === current.relation) countSoFar++;
+  }
+
+  return `${ordinal(countSoFar)} ${SIBLING_RELATION_LABELS[current.relation]}`;
 }
 
 function FamilySection({ data, onChange }: { data: Record<string, unknown>; onChange: (d: Record<string, unknown>) => void }) {
@@ -555,11 +815,11 @@ function FamilySection({ data, onChange }: { data: Record<string, unknown>; onCh
   const siblings = (data.siblings as SiblingEntry[]) || [];
 
   const addSibling = () => {
-    update("siblings", [...siblings, { name: "", marital_status: "", occupation: "", education: "" }]);
+    update("siblings", [...siblings, { name: "", relation: undefined, marital_status: "", occupation: "", education: "" }]);
   };
 
   const updateSibling = (index: number, key: keyof SiblingEntry, val: string) => {
-    const next = siblings.map((sib, i) => (i === index ? { ...sib, [key]: val } : sib));
+    const next = siblings.map((sib, i) => (i === index ? { ...sib, [key]: val || undefined } : sib));
     update("siblings", next);
   };
 
@@ -571,7 +831,7 @@ function FamilySection({ data, onChange }: { data: Record<string, unknown>; onCh
     <div className="space-y-6">
       <div className="border-b border-[#1a2540]/10 pb-4">
         <h2 className="font-serif text-2xl font-bold text-[#1a2540]">Family Details</h2>
-        <p className="text-xs font-light text-gray-500 mt-1">Parents, siblings, and family values.</p>
+        <p className="text-xs font-light text-gray-500 mt-1">Parents and siblings.</p>
       </div>
       <div className={sectionClass}>
         <div><label className={labelClass}>Father&apos;s Name</label><input className={inputClass} value={(data.father_name as string) || ""} onChange={(e) => update("father_name", e.target.value)} /></div>
@@ -586,17 +846,6 @@ function FamilySection({ data, onChange }: { data: Record<string, unknown>; onCh
         <div><label className={labelClass}>Sisters</label><input className={inputClass} type="number" min={0} value={(data.sisters as number) ?? 0} onChange={(e) => update("sisters", Number(e.target.value))} /></div>
         <div><label className={labelClass}>Married Brothers</label><input className={inputClass} type="number" min={0} value={(data.married_brothers as number) ?? 0} onChange={(e) => update("married_brothers", Number(e.target.value))} /></div>
         <div><label className={labelClass}>Married Sisters</label><input className={inputClass} type="number" min={0} value={(data.married_sisters as number) ?? 0} onChange={(e) => update("married_sisters", Number(e.target.value))} /></div>
-        <div>
-          <label className={labelClass}>Family Type</label>
-          <select className={inputClass} value={(data.family_type as string) || ""} onChange={(e) => update("family_type", e.target.value)}>
-            <option value="">Select</option>
-            <option value="joint">Joint Family</option>
-            <option value="nuclear">Nuclear Family</option>
-          </select>
-        </div>
-        <div><label className={labelClass}>Family Status</label><input className={inputClass} value={(data.family_status as string) || ""} onChange={(e) => update("family_status", e.target.value)} placeholder="Middle Class / Upper Middle Class" /></div>
-        <div><label className={labelClass}>Family Values</label><input className={inputClass} value={(data.family_values as string) || ""} onChange={(e) => update("family_values", e.target.value)} placeholder="Traditional / Modern" /></div>
-        <div><label className={labelClass}>Native Place</label><input className={inputClass} value={(data.native_place as string) || ""} onChange={(e) => update("native_place", e.target.value)} /></div>
         <div className="md:col-span-2">
           <label className={labelClass}>Family Property</label>
           <textarea className={inputClass} rows={2} value={(data.family_property as string) || ""} onChange={(e) => update("family_property", e.target.value)} placeholder="Own house, agricultural land, etc." />
@@ -626,7 +875,7 @@ function FamilySection({ data, onChange }: { data: Record<string, unknown>; onCh
             {siblings.map((sibling, index) => (
               <div key={index} className="relative border border-[#1a2540]/10 rounded-xl p-4 bg-[#1a2540]/[0.02]">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-[#1a2540]/60">Sibling {index + 1}</span>
+                  <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-[#1a2540]/60">{siblingDisplayLabel(siblings, index)}</span>
                   <button
                     type="button"
                     onClick={() => removeSibling(index)}
@@ -645,6 +894,19 @@ function FamilySection({ data, onChange }: { data: Record<string, unknown>; onCh
                       onChange={(e) => updateSibling(index, "name", e.target.value)}
                       placeholder="Sibling's full name"
                     />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Relation</label>
+                    <select
+                      className={inputClass}
+                      value={sibling.relation || ""}
+                      onChange={(e) => updateSibling(index, "relation", e.target.value)}
+                    >
+                      <option value="">Select</option>
+                      {SIBLING_RELATION_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className={labelClass}>Marital Status</label>
@@ -688,42 +950,6 @@ function FamilySection({ data, onChange }: { data: Record<string, unknown>; onCh
   );
 }
 
-function PropertySection({ data, onChange }: { data: Record<string, unknown>; onChange: (d: Record<string, unknown>) => void }) {
-  const update = (key: string, val: unknown) => onChange({ ...data, [key]: val });
-  return (
-    <div className="space-y-6">
-      <div className="border-b border-[#1a2540]/10 pb-4">
-        <h2 className="font-serif text-2xl font-bold text-[#1a2540]">Property Details</h2>
-        <p className="text-xs font-light text-gray-500 mt-1">Personally owned assets and real estate.</p>
-      </div>
-      <div className={sectionClass}>
-        <div className="flex items-center gap-2.5 md:col-span-2 pb-2">
-          <label className="flex items-center gap-2.5 cursor-pointer">
-            <input type="checkbox" checked={!!(data.owns_property)} onChange={(e) => update("owns_property", e.target.checked)} className="rounded border-gray-300 text-[#C8631C] focus:ring-[#C8631C] w-4 h-4" />
-            <span className="text-sm font-medium text-gray-700">Owns Property</span>
-          </label>
-        </div>
-        <div>
-          <label className={labelClass}>Property Type</label>
-          <input className={inputClass} value={(data.property_type as string) || ""} onChange={(e) => update("property_type", e.target.value)} placeholder="House / Apartment / Agricultural Land / Plot" />
-        </div>
-        <div>
-          <label className={labelClass}>Property Location</label>
-          <input className={inputClass} value={(data.property_location as string) || ""} onChange={(e) => update("property_location", e.target.value)} placeholder="City, State" />
-        </div>
-        <div>
-          <label className={labelClass}>Estimated Value (₹)</label>
-          <input className={inputClass} type="number" value={(data.property_value as number) || ""} onChange={(e) => update("property_value", Number(e.target.value))} placeholder="5000000" />
-        </div>
-        <div className="md:col-span-2">
-          <label className={labelClass}>Property Description</label>
-          <textarea className={inputClass} rows={3} value={(data.property_description as string) || ""} onChange={(e) => update("property_description", e.target.value)} placeholder="Describe any additional property details..." />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function PartnerSection({ data, onChange }: { data: Record<string, unknown>; onChange: (d: Record<string, unknown>) => void }) {
   const update = (key: string, val: unknown) => onChange({ ...data, [key]: val });
   return (
@@ -742,7 +968,10 @@ function PartnerSection({ data, onChange }: { data: Record<string, unknown>; onC
         <div><label className={labelClass}>Religion Preference</label><input className={inputClass} value={(data.religion as string) || ""} onChange={(e) => update("religion", e.target.value)} placeholder="Same religion preferred" /></div>
         <div><label className={labelClass}>Caste Preference</label><input className={inputClass} value={(data.caste as string) || ""} onChange={(e) => update("caste", e.target.value)} placeholder="Any caste considered" /></div>
         <div><label className={labelClass}>Location Preference</label><input className={inputClass} value={(data.location as string) || ""} onChange={(e) => update("location", e.target.value)} placeholder="Andhra Pradesh / Telangana" /></div>
-        <div><label className={labelClass}>Min Annual Income (₹)</label><input className={inputClass} type="number" value={(data.income_min as number) || ""} onChange={(e) => update("income_min", Number(e.target.value))} placeholder="500000" /></div>
+        <div>
+          <label className={labelClass}>Min Annual Income</label>
+          <IncomeInput value={data.income_min as number} onChange={(v) => update("income_min", v)} placeholder="5" />
+        </div>
         <div className="md:col-span-2">
           <label className={labelClass}>Other Preferences</label>
           <textarea className={inputClass} rows={3} value={(data.other_preferences as string) || ""} onChange={(e) => update("other_preferences", e.target.value)} placeholder="Any other specific preferences..." />
@@ -902,28 +1131,6 @@ function MediaSection({ data, onChange, profileId }: { data: Record<string, unkn
             </label>
           ))}
         </div>
-      </div>
-    </div>
-  );
-}
-
-function AboutSection({ data, onChange }: { data: string; onChange: (v: string) => void }) {
-  return (
-    <div className="space-y-6">
-      <div className="border-b border-[#1a2540]/10 pb-4">
-        <h2 className="font-serif text-2xl font-bold text-[#1a2540]">About Me</h2>
-        <p className="text-xs font-light text-gray-500 mt-1">Personal narrative and lifestyle aspirations.</p>
-      </div>
-      <div>
-        <label className={labelClass}>Write about yourself, your personality, hobbies, and what you&apos;re looking for</label>
-        <textarea
-          className={inputClass}
-          rows={12}
-          value={data}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="I am a simple, caring person who values family and traditions. I enjoy reading, traveling, and cooking. I am looking for a life partner who shares similar values..."
-        />
-        <p className="text-gray-500 font-light text-xs mt-2 text-right">{data.length} characters</p>
       </div>
     </div>
   );

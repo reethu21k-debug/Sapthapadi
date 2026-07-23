@@ -1,5 +1,10 @@
 {
   "/manifest.webmanifest/route": "app/manifest.webmanifest/route.js",
-  "/page": "app/page.js",
-  "/_not-found/page": "app/_not-found/page.js"
+  "/_not-found/page": "app/_not-found/page.js",
+  "/admin/subscriptions/page": "app/admin/subscriptions/page.js",
+  "/admin/profiles/page": "app/admin/profiles/page.js",
+  "/admin/dashboard/page": "app/admin/dashboard/page.js",
+  "/admin/users/page": "app/admin/users/page.js",
+  "/admin/profiles/create/page": "app/admin/profiles/create/page.js",
+  "/admin/profiles/[id]/edit/page": "app/admin/profiles/[id]/edit/page.js"
 }

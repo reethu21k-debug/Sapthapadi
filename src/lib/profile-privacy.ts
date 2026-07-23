@@ -48,7 +48,6 @@ export const PROFILE_SECTIONS: SectionDef[] = [
       { key: "nakshatram", label: "Nakshatram" },
       { key: "rashi", label: "Rashi" },
       { key: "manglik", label: "Manglik" },
-      { key: "mother_tongue", label: "Mother Tongue" },
       { key: "languages_known", label: "Languages Known" },
       { key: "marital_status", label: "Marital Status" },
       { key: "children", label: "Children" },
@@ -124,11 +123,7 @@ export const PROFILE_SECTIONS: SectionDef[] = [
       { key: "grandmother_name_maternal", label: "Grandmother (Maternal)" },
       { key: "brothers", label: "Brothers" },
       { key: "sisters", label: "Sisters" },
-      { key: "family_type", label: "Family Type" },
-      { key: "family_status", label: "Family Status" },
-      { key: "family_values", label: "Family Values" },
       { key: "family_property", label: "Family Property" },
-      { key: "native_place", label: "Native Place" },
     ],
   },
   {
@@ -156,12 +151,6 @@ export const PROFILE_SECTIONS: SectionDef[] = [
       { key: "income_min", label: "Minimum Income" },
       { key: "other_preferences", label: "Other Preferences" },
     ],
-  },
-  {
-    key: "about_me",
-    label: "About Me",
-    scalar: true,
-    fields: [{ key: "about_me", label: "About Me" }],
   },
   {
     key: "images",

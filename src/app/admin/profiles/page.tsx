@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { ProfilesTable } from "@/components/admin/ProfilesTable";
 import { ProfileFilters } from "@/components/admin/ProfileFiltersBar";
 import Link from "next/link";
@@ -29,7 +29,12 @@ export default async function ProfilesPage({
   searchParams: Promise<SearchParams>;
 }) {
   const params = await searchParams;
-  const supabase = await createClient();
+  // Uses the admin (service-role) client rather than the session-based
+  // client — this page is already gated to admins only. Reading
+  // `subscriptions` with the regular client meant RLS silently filtered
+  // rows out (no error, just an empty result), so assigned subscriptions
+  // never appeared in the table even though the insert itself succeeded.
+  const supabase = await createAdminClient();
   const page = parseInt(params.page || "1");
   const limit = 20;
   const offset = (page - 1) * limit;
@@ -101,6 +106,61 @@ export default async function ProfilesPage({
     });
   }
 
+  // Active subscription plans, needed by the "Assign Subscription" action
+  // available from each profile row's action menu.
+  const { data: plans } = await supabase
+    .from("subscription_plans")
+    .select("id, plan, name, price, duration_days, is_active")
+    .order("sort_order");
+
+  // Active subscriptions for the profiles on this page, keyed by profile so
+  // the table can show the current plan and toggle Assign vs Remove. A
+  // subscription can be linked either via profile_id directly (shadow
+  // profiles / assigned from this page), or via the profile's user_id (when
+  // it was created through the standalone Subscriptions "Add Subscription"
+  // flow, which only stores user_id).
+  const userIds = (profiles || [])
+    .map((p) => p.user_id)
+    .filter((id): id is string => Boolean(id));
+
+  const subscriptionsByProfile: Record<
+    string,
+    { id: string; plan: string; status: string; expiry_date: string }
+  > = {};
+
+  if (profileIds.length > 0 || userIds.length > 0) {
+    const orParts: string[] = [];
+    if (profileIds.length > 0) orParts.push(`profile_id.in.(${profileIds.join(",")})`);
+    if (userIds.length > 0) orParts.push(`user_id.in.(${userIds.join(",")})`);
+
+    const { data: activeSubs } = await supabase
+      .from("subscriptions")
+      .select("id, user_id, profile_id, plan, status, expiry_date")
+      .eq("status", "active")
+      .or(orParts.join(","));
+
+    type ActiveSub = { id: string; user_id: string | null; profile_id: string | null; plan: string; status: string; expiry_date: string };
+
+    const byUserId: Record<string, ActiveSub> = {};
+    const byProfileId: Record<string, ActiveSub> = {};
+    ((activeSubs || []) as ActiveSub[]).forEach((s) => {
+      if (s.user_id) byUserId[s.user_id] = s;
+      if (s.profile_id) byProfileId[s.profile_id] = s;
+    });
+
+    (profiles || []).forEach((p) => {
+      const sub = byProfileId[p.id] || (p.user_id ? byUserId[p.user_id] : undefined);
+      if (sub) {
+        subscriptionsByProfile[p.id] = {
+          id: sub.id,
+          plan: sub.plan,
+          status: sub.status,
+          expiry_date: sub.expiry_date,
+        };
+      }
+    });
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -123,6 +183,8 @@ export default async function ProfilesPage({
         page={page}
         limit={limit}
         matchMeetingCounts={matchMeetingCounts}
+        plans={plans || []}
+        subscriptionsByProfile={subscriptionsByProfile}
       />
     </div>
   );

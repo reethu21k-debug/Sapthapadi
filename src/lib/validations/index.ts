@@ -34,6 +34,9 @@ export const resetPasswordSchema = z.object({
 
 // ─── Profile Schemas ──────────────────────────────────────────
 
+// Accepts "hh:mm AM/PM", e.g. "02:30 PM"
+const timeOfBirth12hRegex = /^(0?[1-9]|1[0-2]):[0-5][0-9] (AM|PM)$/i;
+
 export const personalDetailsSchema = z.object({
   first_name: z.string().min(2, "First name is required"),
   middle_name: z.string().optional(),
@@ -41,7 +44,7 @@ export const personalDetailsSchema = z.object({
   gender: z.enum(["male", "female"]),
   date_of_birth: z.string().min(1, "Date of birth is required"),
   place_of_birth: z.string().optional(),
-  time_of_birth: z.string().optional(),
+  time_of_birth: z.string().regex(timeOfBirth12hRegex, "Use 12-hour format, e.g. 02:30 PM").optional().or(z.literal("")),
   height_cm: z.number().min(100, "Height must be at least 100cm").max(250, "Height seems too tall"),
   weight_kg: z.number().min(30).max(300).optional(),
   blood_group: z.enum(["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]).optional(),
@@ -53,7 +56,6 @@ export const personalDetailsSchema = z.object({
   nakshatram: z.string().optional(),
   rashi: z.string().optional(),
   manglik: z.enum(["yes", "no", "anshik", "dont_know"]).optional(),
-  mother_tongue: z.string().min(1, "Mother tongue is required"),
   languages_known: z.array(z.string()).default([]),
   marital_status: z.enum(["never_married", "divorced", "widowed"]),
   children: z.number().min(0).optional(),
@@ -87,6 +89,7 @@ export const professionSchema = z.object({
   company_name: z.string().optional(),
   company_location: z.string().optional(),
   work_country: z.string().optional(),
+  // Absolute INR value, derived from the LPA/CR entry widget — see incomeToAbsolute() in lib/utils.
   annual_income: z.number().min(0).optional(),
   income_currency: z.string().default("INR"),
   employment_type: z.enum(["salaried", "self_employed", "business", "government", "freelance", "not_working"]).optional(),
@@ -125,11 +128,7 @@ export const familySchema = z.object({
   married_brothers: z.number().min(0).default(0),
   married_sisters: z.number().min(0).default(0),
   siblings: z.array(siblingSchema).optional(),
-  family_type: z.enum(["joint", "nuclear"]).optional(),
-  family_status: z.string().optional(),
-  family_values: z.string().optional(),
   family_property: z.string().optional(),
-  native_place: z.string().optional(),
 });
 
 export const propertyDetailsSchema = z.object({
@@ -179,6 +178,15 @@ export const subscriptionSchema = z.object({
   notes: z.string().optional(),
 });
 
+/** Simplified schema for the "Assign Plan" quick-action in the admin Users list. */
+export const assignSubscriptionSchema = z.object({
+  user_id: z.string().uuid("Select a user"),
+  plan_config_id: z.string().uuid("Select a plan"),
+  payment_mode: z.enum(["cash", "upi", "card", "bank_transfer"]).default("cash"),
+  amount_paid: z.number().min(0).optional(),
+  notes: z.string().optional(),
+});
+
 // ─── Plan Schema ──────────────────────────────────────────────
 
 export const planSchema = z.object({
@@ -221,6 +229,15 @@ export const profileFilterSchema = z.object({
   search: z.string().optional(),
 });
 
+// ─── Duplicate Candidate Check Schema ──────────────────────────
+
+export const duplicateCheckSchema = z.object({
+  first_name: z.string().min(1),
+  last_name: z.string().min(1),
+  date_of_birth: z.string().min(1),
+  exclude_id: z.string().uuid().optional(),
+});
+
 // ─── Settings Schema ──────────────────────────────────────────
 
 export const siteSettingsSchema = z.object({
@@ -253,5 +270,7 @@ export type FamilyFormData = z.infer<typeof familySchema>;
 export type PropertyDetailsFormData = z.infer<typeof propertyDetailsSchema>;
 export type PartnerPreferencesFormData = z.infer<typeof partnerPreferencesSchema>;
 export type SubscriptionFormData = z.infer<typeof subscriptionSchema>;
+export type AssignSubscriptionFormData = z.infer<typeof assignSubscriptionSchema>;
 export type ProfileAccessFormData = z.infer<typeof profileAccessSchema>;
 export type SiteSettingsFormData = z.infer<typeof siteSettingsSchema>;
+export type DuplicateCheckFormData = z.infer<typeof duplicateCheckSchema>;

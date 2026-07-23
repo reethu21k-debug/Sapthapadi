@@ -15,7 +15,7 @@ import Link from "next/link";
 import { Profile, AuditLog, AuditAction, ProfileAdminDocuments } from "@/types";
 import {
   calculateAge, formatDate, formatHeight, formatIncome,
-  formatRelativeTime, titleCase, STATUS_COLORS, cn, PLAN_LABELS,
+  formatRelativeTime, formatTimeOfBirth, titleCase, STATUS_COLORS, cn, PLAN_LABELS,
 } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { VerifiedBadge } from "@/components/shared/VerifiedBadge";
@@ -500,7 +500,7 @@ export function ProfileDetailView({ profile, subscription, accessList, auditLogs
               <InfoCard title="Personal Details" icon={User}>
                 <InfoRow label="Date of Birth" value={p?.date_of_birth ? formatDate(p.date_of_birth) : "—"} />
                 <InfoRow label="Place of Birth" value={p?.place_of_birth || "—"} />
-                <InfoRow label="Time of Birth" value={p?.time_of_birth || "—"} />
+                <InfoRow label="Time of Birth" value={formatTimeOfBirth(p?.time_of_birth)} />
                 <InfoRow label="Age" value={p?.date_of_birth ? `${calculateAge(p.date_of_birth)} Years` : "—"} />
                 <InfoRow label="Height" value={p?.height_cm ? formatHeight(p.height_cm) : "—"} />
                 <InfoRow label="Weight" value={p?.weight_kg ? `${p.weight_kg} kg` : "—"} />
@@ -510,7 +510,6 @@ export function ProfileDetailView({ profile, subscription, accessList, auditLogs
                 <InfoRow label="Nakshatram" value={p?.nakshatram || "—"} />
                 <InfoRow label="Rashi" value={p?.rashi || "—"} />
                 <InfoRow label="Manglik Status" value={p?.manglik ? titleCase(p.manglik) : "—"} />
-                <InfoRow label="Mother Tongue" value={p?.mother_tongue || "—"} />
                 <InfoRow label="Spoken Languages" value={(p?.languages_known || []).join(", ") || "—"} />
                 <InfoRow label="Marital Status" value={p?.marital_status ? titleCase(p.marital_status.replace(/_/g, " ")) : "—"} />
                 <InfoRow label="Dietary Preference" value={p?.food_preference ? titleCase(p.food_preference.replace(/_/g, " ")) : "—"} />
@@ -554,16 +553,6 @@ export function ProfileDetailView({ profile, subscription, accessList, auditLogs
                 <InfoRow label="Passing Year" value={edu?.year_passed?.toString() || "—"} />
                 <InfoRow label="Other Certifications" value={edu?.additional_qualifications || "—"} />
               </InfoCard>
-
-              {profile.about_me && (
-                <div className="lg:col-span-2">
-                  <InfoCard title="About Me Summary" icon={User}>
-                    <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-line px-1">
-                      {profile.about_me}
-                    </p>
-                  </InfoCard>
-                </div>
-              )}
 
               {subscription && (
                 <InfoCard title="Active Subscription Plan" icon={Shield}>
@@ -696,10 +685,6 @@ export function ProfileDetailView({ profile, subscription, accessList, auditLogs
                 <InfoRow label="Maternal Grandmother" value={fam?.grandmother_name_maternal || "—"} />
                 <InfoRow label="Brothers Count" value={`${fam?.brothers || 0} (Married: ${fam?.married_brothers || 0})`} />
                 <InfoRow label="Sisters Count" value={`${fam?.sisters || 0} (Married: ${fam?.married_sisters || 0})`} />
-                <InfoRow label="Family Structure" value={fam?.family_type ? titleCase(fam.family_type) : "—"} />
-                <InfoRow label="Social Standing" value={fam?.family_status || "—"} />
-                <InfoRow label="Core Values" value={fam?.family_values || "—"} />
-                <InfoRow label="Ancestral Origin" value={fam?.native_place || "—"} />
                 <InfoRow label="Properties / Assets" value={fam?.family_property || "—"} className="md:col-span-2" />
               </div>
               {!!fam?.siblings?.length && (

@@ -8,7 +8,7 @@ import {
   CheckCircle2, XCircle, Loader2, X,
 } from "lucide-react";
 import Link from "next/link";
-import { calculateAge, formatDate, formatHeight, formatIncome, titleCase, cn } from "@/lib/utils";
+import { calculateAge, formatDate, formatHeight, formatIncome, formatTimeOfBirth, titleCase, cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { VerifiedBadge } from "@/components/shared/VerifiedBadge";
 import { isSectionFullyHidden, isFieldVisible, type VisibleFieldsMap } from "@/lib/profile-privacy";
@@ -243,15 +243,6 @@ export function UserProfileDetailView({
                 </div>
               ))}
             </div>
-
-            {/* About */}
-            {!!profile.about_me && (
-              <div className="mt-5 p-4 bg-gold/5 rounded-xl border border-gold/10">
-                <p className="text-gray-600 text-sm leading-relaxed line-clamp-3">
-                  {String(profile.about_me)}
-                </p>
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -381,13 +372,12 @@ export function UserProfileDetailView({
           <InfoRow label="Gender" value={personal?.gender ? titleCase(String(personal.gender)) : "—"} />
           <InfoRow label="Date of Birth" value={personal?.date_of_birth ? formatDate(String(personal.date_of_birth)) : "—"} />
           <InfoRow label="Place of Birth" value={String(personal?.place_of_birth || "—")} />
-          <InfoRow label="Time of Birth" value={String(personal?.time_of_birth || "—")} />
+          <InfoRow label="Time of Birth" value={formatTimeOfBirth(personal?.time_of_birth as string | undefined)} />
           <InfoRow label="Blood Group" value={String(personal?.blood_group || "—")} />
           <InfoRow label="Complexion" value={String(personal?.complexion || "—")} />
           <InfoRow label="Nakshatram" value={String(personal?.nakshatram || "—")} />
           <InfoRow label="Rashi" value={String(personal?.rashi || "—")} />
           <InfoRow label="Manglik" value={personal?.manglik ? titleCase(String(personal.manglik)) : "—"} />
-          <InfoRow label="Mother Tongue" value={String(personal?.mother_tongue || "—")} />
           <InfoRow label="Languages" value={((personal?.languages_known as string[]) || []).join(", ") || "—"} />
           <InfoRow label="Food Preference" value={personal?.food_preference ? titleCase(String(personal.food_preference).replace(/_/g, " ")) : "—"} />
           <InfoRow label="Habits" value={String(personal?.habits || "—")} />
@@ -435,9 +425,6 @@ export function UserProfileDetailView({
           <InfoRow label="Grandmother (Maternal)" value={fam?.grandmother_name_maternal ? String(fam.grandmother_name_maternal) : "—"} />
           <InfoRow label="Brothers" value={`${fam?.brothers || 0} (Married: ${fam?.married_brothers || 0})`} />
           <InfoRow label="Sisters" value={`${fam?.sisters || 0} (Married: ${fam?.married_sisters || 0})`} />
-          <InfoRow label="Family Type" value={fam?.family_type ? titleCase(String(fam.family_type)) : "—"} />
-          <InfoRow label="Family Status" value={fam?.family_status ? String(fam.family_status) : "—"} />
-          <InfoRow label="Native Place" value={fam?.native_place ? String(fam.native_place) : "—"} />
           {!!(fam?.siblings as Array<Record<string, unknown>>)?.length && (
             <div className="md:col-span-2 pt-3 mt-2 border-t border-gray-100">
               <h3 className="font-serif text-base font-bold text-navy-dark mb-3">Sibling Profiles</h3>

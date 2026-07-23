@@ -4,17 +4,29 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
-import { Ban, RefreshCw, Search, Users, Shield, UserX, UserCheck } from "lucide-react";
+import { Ban, RefreshCw, Search, Users, Shield, UserX, UserCheck, CreditCard } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatDate, cn, PLAN_LABELS, getDaysRemaining } from "@/lib/utils";
+import { AssignSubscriptionModal } from "@/components/admin/AssignSubscriptionModal";
+
+interface PlanOption {
+  id: string;
+  plan: string;
+  name: string;
+  price: number;
+  duration_days: number;
+  is_active: boolean;
+}
 
 interface Props {
   users: Record<string, unknown>[];
+  plans?: PlanOption[];
 }
 
-export function UsersManager({ users }: Props) {
+export function UsersManager({ users, plans = [] }: Props) {
   const router = useRouter();
   const [search, setSearch] = useState("");
+  const [assigningUser, setAssigningUser] = useState<{ id: string; full_name?: string; email?: string } | null>(null);
 
   const filtered = users.filter((u) => {
     const q = search.toLowerCase();
@@ -46,6 +58,17 @@ export function UsersManager({ users }: Props) {
       transition={{ duration: 0.3 }}
       className="luxury-card overflow-hidden bg-white rounded-2xl border border-gray-100 shadow-sm"
     >
+      <AssignSubscriptionModal
+        target={
+          assigningUser
+            ? { user_id: assigningUser.id, full_name: assigningUser.full_name, email: assigningUser.email }
+            : null
+        }
+        plans={plans}
+        onClose={() => setAssigningUser(null)}
+        onAssigned={() => router.refresh()}
+      />
+
       {/* Top Header & Search Bar */}
       <div className="p-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gray-50/40">
         <div className="flex items-center gap-2.5">
@@ -77,7 +100,7 @@ export function UsersManager({ users }: Props) {
 
       {/* Main Users Table */}
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[720px] text-left border-collapse">
+        <table className="w-full min-w-[780px] text-left border-collapse">
           <thead>
             <tr className="border-b border-gray-150 bg-gray-50/80 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
               <th className="py-3.5 px-5">User & Contact</th>
@@ -131,6 +154,7 @@ export function UsersManager({ users }: Props) {
                           <a 
                             href={`/admin/profiles/${String(profile.id)}`} 
                             className="inline-block px-2 py-0.5 rounded bg-gold/10 text-gold-dark font-mono font-bold text-xs border border-gold/20 hover:bg-gold hover:text-navy-dark transition-all"
+                            title="Open full profile"
                           >
                             {String(profile.profile_id || "—")}
                           </a>
@@ -176,31 +200,43 @@ export function UsersManager({ users }: Props) {
                       </span>
                     </td>
 
-                    <td className="py-3.5 px-5 text-right">
-                      {u.role !== "admin" ? (
-                        <motion.button
-                          whileTap={{ scale: 0.96 }}
-                          onClick={() => toggleActive(String(u.id), Boolean(u.is_active))}
-                          className={cn(
-                            "inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl font-semibold transition-all shadow-2xs border",
-                            u.is_active
-                              ? "text-amber-700 bg-amber-50 border-amber-200/80 hover:bg-amber-100"
-                              : "text-emerald-700 bg-emerald-50 border-emerald-200/80 hover:bg-emerald-100"
-                          )}
-                        >
-                          {u.is_active ? (
-                            <>
-                              <UserX className="w-3.5 h-3.5 text-amber-600" /> Deactivate
-                            </>
-                          ) : (
-                            <>
-                              <UserCheck className="w-3.5 h-3.5 text-emerald-600" /> Activate
-                            </>
-                          )}
-                        </motion.button>
-                      ) : (
-                        <span className="text-gray-300 text-xs font-medium italic">—</span>
-                      )}
+                    <td className="py-3.5 px-5">
+                      <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                        {u.role !== "admin" && (
+                          <button
+                            onClick={() => setAssigningUser({ id: String(u.id), full_name: u.full_name as string, email: u.email as string })}
+                            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl font-semibold transition-all shadow-2xs border text-sky-700 bg-sky-50 border-sky-200/80 hover:bg-sky-100"
+                            title="Assign a subscription plan to this user"
+                          >
+                            <CreditCard className="w-3.5 h-3.5 text-sky-600" /> Assign Plan
+                          </button>
+                        )}
+
+                        {u.role !== "admin" ? (
+                          <motion.button
+                            whileTap={{ scale: 0.96 }}
+                            onClick={() => toggleActive(String(u.id), Boolean(u.is_active))}
+                            className={cn(
+                              "inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl font-semibold transition-all shadow-2xs border",
+                              u.is_active
+                                ? "text-amber-700 bg-amber-50 border-amber-200/80 hover:bg-amber-100"
+                                : "text-emerald-700 bg-emerald-50 border-emerald-200/80 hover:bg-emerald-100"
+                            )}
+                          >
+                            {u.is_active ? (
+                              <>
+                                <UserX className="w-3.5 h-3.5 text-amber-600" /> Deactivate
+                              </>
+                            ) : (
+                              <>
+                                <UserCheck className="w-3.5 h-3.5 text-emerald-600" /> Activate
+                              </>
+                            )}
+                          </motion.button>
+                        ) : (
+                          <span className="text-gray-300 text-xs font-medium italic">—</span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );

@@ -1,7 +1,7 @@
 import jsPDF from "jspdf";
 import QRCode from "qrcode";
 import { Profile } from "@/types";
-import { calculateAge, formatDate, formatHeight, formatIncome } from "@/lib/utils";
+import { calculateAge, formatDate, formatHeight, formatIncome, formatTimeOfBirth } from "@/lib/utils";
 
 // ─── Types & Configuration ─────────────────────────────────────
 
@@ -392,13 +392,12 @@ export async function generateBiodataPDF(profile: Profile): Promise<Buffer> {
     ["Full Name", fullName],
     ["Date of Birth", personal.date_of_birth ? formatDate(personal.date_of_birth) : "—"],
     ["Place of Birth", personal.place_of_birth ?? "—"],
-    ["Time of Birth", personal.time_of_birth ?? "—"],
+    ["Time of Birth", personal.time_of_birth ? formatTimeOfBirth(personal.time_of_birth) : "—"],
     ["Age", age !== null ? `${age} Years` : "—"],
     ["Height", personal.height_cm ? formatHeight(personal.height_cm) : "—"],
     ["Weight", personal.weight_kg ? `${personal.weight_kg} kg` : "—"],
     ["Blood Group", personal.blood_group ?? "—"],
     ["Complexion", personal.complexion ?? "—"],
-    ["Mother Tongue", personal.mother_tongue ?? "—"],
     ["Languages Known", (personal.languages_known ?? []).join(", ") || "—"],
     ["Marital Status", personal.marital_status?.replace("_", " ") ?? "—"],
     ["Religion", personal.religion ?? "—"],
@@ -488,10 +487,6 @@ export async function generateBiodataPDF(profile: Profile): Promise<Buffer> {
     ["Grandmother (Mother's)", family.grandmother_name_maternal ?? "—"],
     ["Brothers", `${family.brothers ?? 0} (Married: ${family.married_brothers ?? 0})`],
     ["Sisters", `${family.sisters ?? 0} (Married: ${family.married_sisters ?? 0})`],
-    ["Family Type", family.family_type?.replace("_", " ") ?? "—"],
-    ["Family Status", family.family_status ?? "—"],
-    ["Family Values", family.family_values ?? "—"],
-    ["Native Place", family.native_place ?? "—"],
     ["Family Property", family.family_property ?? "—"],
   ];
 
@@ -537,30 +532,6 @@ export async function generateBiodataPDF(profile: Profile): Promise<Buffer> {
     ["Minimum Income", prefs.income_min ? formatIncome(prefs.income_min) : "No preference"],
   ];
   y = drawInfoTable(doc, prefData, y);
-
-  // ─── About Me ────────────────────────────────────────────
-  if (profile.about_me) {
-    if (y > 210) { y = startNewPage(doc); }
-
-    y = drawSectionHeader(doc, "About Me", y);
-
-    setFillColor(doc, COLORS.blush);
-    doc.rect(16, y, pageW - 32, 35, "F");
-    
-    setDrawColor(doc, COLORS.goldPale);
-    doc.setLineWidth(0.3);
-    doc.rect(16, y, pageW - 32, 35, "S");
-    
-    drawDiamond(doc, pageW / 2, y, 1.6, COLORS.gold);
-
-    setTextColor(doc, COLORS.ink);
-    doc.setFontSize(9);
-    doc.setFont("times", "italic");
-
-    const lines = doc.splitTextToSize(profile.about_me, pageW - 40);
-    doc.text(lines.slice(0, 7), 20, y + 9, { lineHeightFactor: 1.5 });
-    y += 42;
-  }
 
   // ─── Gallery Photos ───────────────────────────────────────
   const photos = [profile.images?.photo_2, profile.images?.photo_3].filter(Boolean) as string[];
