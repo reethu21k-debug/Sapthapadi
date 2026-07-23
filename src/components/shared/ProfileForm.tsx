@@ -494,6 +494,73 @@ function IncomeInput({ value, onChange, placeholder = "8" }: { value?: number; o
   );
 }
 
+/** 1 foot = 30.48 cm exactly; 1 inch = 2.54 cm exactly. */
+const CM_PER_INCH = 2.54;
+const INCHES_PER_FOOT = 12;
+
+function cmToFeetInches(cm: number | undefined): { feet: string; inches: string } {
+  if (cm === undefined || cm === null || Number.isNaN(cm)) return { feet: "", inches: "" };
+  const totalInches = cm / CM_PER_INCH;
+  // Round to the nearest whole inch — feet/inches is a coarser unit than cm,
+  // so a value saved as "5 ft 6 in" (167.64 cm exactly) still round-trips
+  // back to 5 ft 6 in rather than drifting to 5 ft 5 in / 5 ft 7 in.
+  const roundedInches = Math.round(totalInches);
+  const feet = Math.floor(roundedInches / INCHES_PER_FOOT);
+  const inches = roundedInches % INCHES_PER_FOOT;
+  return { feet: String(feet), inches: String(inches) };
+}
+
+function feetInchesToCm(feet: string, inches: string): number | undefined {
+  if (feet === "" && inches === "") return undefined;
+  const f = feet === "" ? 0 : Number(feet);
+  const i = inches === "" ? 0 : Number(inches);
+  if (Number.isNaN(f) || Number.isNaN(i)) return undefined;
+  const totalInches = f * INCHES_PER_FOOT + i;
+  return Math.round(totalInches * CM_PER_INCH * 100) / 100;
+}
+
+/**
+ * Height entered as feet + inches, stored as centimeters (`height_cm` /
+ * `height_min_cm` / `height_max_cm`) so every other part of the app — the
+ * biodata PDF, profile detail views, and partner-preference height-range
+ * matching — keeps working against a single comparable number with no
+ * changes needed there. Only the input experience changes.
+ */
+function HeightInput({ value, onChange }: { value?: number; onChange: (cm: number | undefined) => void }) {
+  const initial = cmToFeetInches(value);
+  const [feet, setFeet] = useState(initial.feet);
+  const [inches, setInches] = useState(initial.inches);
+
+  const commit = (f: string, i: string) => {
+    onChange(feetInchesToCm(f, i));
+  };
+
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      <select
+        className={inputClass}
+        value={feet}
+        onChange={(e) => { setFeet(e.target.value); commit(e.target.value, inches); }}
+      >
+        <option value="">Feet</option>
+        {Array.from({ length: 8 }, (_, i) => i + 1).map((f) => (
+          <option key={f} value={f}>{f} ft</option>
+        ))}
+      </select>
+      <select
+        className={inputClass}
+        value={inches}
+        onChange={(e) => { setInches(e.target.value); commit(feet, e.target.value); }}
+      >
+        <option value="">Inches</option>
+        {Array.from({ length: 12 }, (_, i) => i).map((i) => (
+          <option key={i} value={i}>{i} in</option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 function PersonalSection({ data, onChange, isCheckingDuplicate }: { data: Record<string, unknown>; onChange: (d: Record<string, unknown>) => void; isCheckingDuplicate?: boolean }) {
   const update = (key: string, val: unknown) => onChange({ ...data, [key]: val });
 
@@ -540,8 +607,8 @@ function PersonalSection({ data, onChange, isCheckingDuplicate }: { data: Record
           <TimeOfBirthInput value={data.time_of_birth as string} onChange={(v) => update("time_of_birth", v)} />
         </div>
         <div>
-          <label className={labelClass}>Height (cm) *</label>
-          <input className={inputClass} type="number" value={(data.height_cm as number) || ""} onChange={(e) => update("height_cm", Number(e.target.value))} placeholder="165" />
+          <label className={labelClass}>Height *</label>
+          <HeightInput value={data.height_cm as number} onChange={(cm) => update("height_cm", cm)} />
         </div>
         <div>
           <label className={labelClass}>Weight (kg)</label>
@@ -961,8 +1028,8 @@ function PartnerSection({ data, onChange }: { data: Record<string, unknown>; onC
       <div className={sectionClass}>
         <div><label className={labelClass}>Minimum Age</label><input className={inputClass} type="number" value={(data.age_min as number) || ""} onChange={(e) => update("age_min", Number(e.target.value))} placeholder="22" /></div>
         <div><label className={labelClass}>Maximum Age</label><input className={inputClass} type="number" value={(data.age_max as number) || ""} onChange={(e) => update("age_max", Number(e.target.value))} placeholder="30" /></div>
-        <div><label className={labelClass}>Min Height (cm)</label><input className={inputClass} type="number" value={(data.height_min_cm as number) || ""} onChange={(e) => update("height_min_cm", Number(e.target.value))} placeholder="155" /></div>
-        <div><label className={labelClass}>Max Height (cm)</label><input className={inputClass} type="number" value={(data.height_max_cm as number) || ""} onChange={(e) => update("height_max_cm", Number(e.target.value))} placeholder="185" /></div>
+        <div><label className={labelClass}>Min Height</label><HeightInput value={data.height_min_cm as number} onChange={(cm) => update("height_min_cm", cm)} /></div>
+        <div><label className={labelClass}>Max Height</label><HeightInput value={data.height_max_cm as number} onChange={(cm) => update("height_max_cm", cm)} /></div>
         <div><label className={labelClass}>Education Preference</label><input className={inputClass} value={(data.education as string) || ""} onChange={(e) => update("education", e.target.value)} placeholder="Graduate and above" /></div>
         <div><label className={labelClass}>Profession Preference</label><input className={inputClass} value={(data.profession as string) || ""} onChange={(e) => update("profession", e.target.value)} placeholder="Any profession" /></div>
         <div><label className={labelClass}>Religion Preference</label><input className={inputClass} value={(data.religion as string) || ""} onChange={(e) => update("religion", e.target.value)} placeholder="Same religion preferred" /></div>
