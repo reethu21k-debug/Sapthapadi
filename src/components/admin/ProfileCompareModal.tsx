@@ -181,7 +181,6 @@ export function ProfileCompareModal({ ids, onClose }: Props) {
         setLoading(false);
         return;
       }
-      // Preserve the original selection order (a-then-b as picked).
       const byId = new Map(data.map((d) => [d.id, d as Profile]));
       const ordered = [byId.get(ids[0])!, byId.get(ids[1])!];
       setProfiles(ordered as [Profile, Profile]);
@@ -235,6 +234,7 @@ export function ProfileCompareModal({ ids, onClose }: Props) {
   if (!ids) return null;
 
   const name = (p: Profile) => [p.personal?.first_name, p.personal?.last_name].filter(Boolean).join(" ") || "Unnamed";
+  const firstName = (p: Profile) => p.personal?.first_name || "Candidate";
 
   return createPortal(
     <AnimatePresence>
@@ -242,118 +242,164 @@ export function ProfileCompareModal({ ids, onClose }: Props) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        transition={{ duration: 0.15 }}
-        className="fixed inset-0 z-[100] bg-black/60 flex items-start justify-center p-4 sm:p-8 overflow-y-auto"
+        transition={{ duration: 0.18 }}
+        className="fixed inset-0 z-[100] bg-stone-950/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 md:p-6 lg:p-10"
         onClick={onClose}
       >
         <motion.div
-          initial={{ scale: 0.97, opacity: 0, y: 10 }}
+          initial={{ scale: 0.98, opacity: 0, y: 12 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.97, opacity: 0, y: 10 }}
-          transition={{ duration: 0.15 }}
-          className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl my-4 overflow-hidden"
+          exit={{ scale: 0.98, opacity: 0, y: 12 }}
+          transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+          className="bg-white rounded-2xl sm:rounded-3xl border border-stone-200/60 shadow-[0_20px_70px_-10px_rgba(0,0,0,0.15)] w-full max-w-5xl max-h-[94vh] flex flex-col overflow-hidden text-stone-800"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/60 sticky top-0 z-10">
-            <h2 className="font-serif font-bold text-navy-dark text-lg">Compare Profiles</h2>
-            <div className="flex items-center gap-2">
+          {/* Sticky Header */}
+          <div className="flex items-center justify-between px-4 py-3.5 sm:px-6 sm:py-4 md:px-8 md:py-5 border-b border-stone-100 bg-white/95 backdrop-blur-md shrink-0 z-30">
+            <div className="min-w-0 pr-2">
+              <h2 className="font-serif font-bold text-[#3A101E] text-base sm:text-lg md:text-xl tracking-tight truncate">
+                Profile Comparison
+              </h2>
+              <p className="text-[11px] sm:text-xs text-stone-400 mt-0.5 hidden sm:block truncate">
+                Side-by-side demographic and compatibility breakdown
+              </p>
+            </div>
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               <button
                 onClick={handleDownloadPDF}
                 disabled={isDownloading || loading || !!error || !profiles}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gold text-navy-dark font-semibold text-xs hover:bg-gold-dark hover:text-white transition-all shadow-2xs disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-[#3A101E] text-white font-medium text-xs hover:bg-[#4E1629] active:scale-[0.98] transition-all shadow-xs disabled:opacity-40 disabled:pointer-events-none"
               >
-                {isDownloading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileDown className="w-3.5 h-3.5" />}
-                {isDownloading ? "Generating..." : "Download PDF"}
+                {isDownloading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileDown className="w-3.5 h-3.5 text-[#E5C370]" />}
+                <span>{isDownloading ? "Generating..." : <span className="hidden sm:inline">Download Biodatas</span>}</span>
+                {!isDownloading && <span className="sm:hidden">PDF</span>}
               </button>
               <button
                 onClick={onClose}
-                className="p-1.5 rounded-lg hover:bg-gray-200/70 text-gray-500 transition-colors"
+                className="p-2 sm:p-2.5 rounded-xl bg-stone-50 hover:bg-stone-100 border border-stone-200/60 text-stone-400 hover:text-stone-700 transition-all active:scale-95"
                 title="Close"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
               </button>
             </div>
           </div>
 
-          {loading && (
-            <div className="py-20 flex flex-col items-center justify-center text-gray-400">
-              <Loader2 className="w-6 h-6 animate-spin mb-2" />
-              <p className="text-xs font-medium">Loading profiles…</p>
-            </div>
-          )}
+          {/* Scrollable Body */}
+          <div className="overflow-y-auto flex-1 divide-y divide-stone-100">
+            {loading && (
+              <div className="py-32 flex flex-col items-center justify-center text-stone-400">
+                <Loader2 className="w-6 h-6 animate-spin text-[#3A101E] mb-3" />
+                <p className="text-xs font-medium tracking-wider uppercase text-stone-400">Loading candidate data…</p>
+              </div>
+            )}
 
-          {error && (
-            <div className="py-20 text-center text-rose-500 text-sm font-medium">{error}</div>
-          )}
+            {error && (
+              <div className="py-24 text-center px-4">
+                <div className="inline-block px-6 py-3 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 text-sm font-medium">
+                  {error}
+                </div>
+              </div>
+            )}
 
-          {profiles && !loading && !error && (
-            <div className="max-h-[80vh] overflow-y-auto">
-              {/* Photo + name header row, side by side */}
-              <div className="grid grid-cols-2 gap-4 sm:gap-6 px-6 pt-6">
-                {profiles.map((p, i) => (
-                  <div key={p.id} className="flex flex-col items-center text-center">
-                    <div className="w-24 h-24 rounded-2xl border-4 border-white shadow-lg overflow-hidden bg-gold/10 flex items-center justify-center">
-                      {p.images?.profile_photo ? (
-                        <img src={p.images.profile_photo} alt={name(p)} className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="font-serif text-3xl font-bold text-gold-dark">
-                          {p.personal?.first_name?.[0] || "?"}
+            {profiles && !loading && !error && (
+              <>
+                {/* Responsive Hero Banner */}
+                <div className="grid grid-cols-2 gap-3 sm:gap-6 md:gap-8 px-3 py-5 sm:px-6 sm:py-6 md:px-8 md:py-8 bg-stone-50/40">
+                  {profiles.map((p, index) => (
+                    <div key={p.id} className={cn("flex flex-col items-center text-center min-w-0", index === 0 ? "border-r border-stone-200/50 pr-2 sm:pr-4" : "pl-2 sm:pl-4")}>
+                      
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-xl sm:rounded-2xl border border-stone-200/80 shadow-sm overflow-hidden bg-white flex items-center justify-center shrink-0">
+                        {p.images?.profile_photo ? (
+                          <img src={p.images.profile_photo} alt={name(p)} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="font-serif text-xl sm:text-2xl font-bold text-stone-300">
+                            {p.personal?.first_name?.[0] || "?"}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1 sm:gap-1.5 mt-3 sm:mt-4 flex-wrap justify-center max-w-full">
+                        <h3 className="font-serif font-semibold text-[#3A101E] text-sm sm:text-base truncate max-w-[120px] sm:max-w-none">{name(p)}</h3>
+                        {p.is_verified && <VerifiedBadge size="sm" />}
+                      </div>
+
+                      <div className="mt-1 flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded-md bg-stone-100 text-stone-600 font-mono text-[10px] sm:text-[11px] font-medium tracking-wide">
+                          {p.profile_id}
                         </span>
+                      </div>
+                      
+                      {(p.images?.photo_2 || p.images?.photo_3) && (
+                        <div className="flex gap-1.5 sm:gap-2 mt-3 sm:mt-4 pt-2.5 sm:pt-3 border-t border-stone-200/40 w-full justify-center">
+                          {[p.images?.photo_2, p.images?.photo_3].filter(Boolean).map((url, j) => (
+                            <a key={j} href={url as string} target="_blank" rel="noreferrer" className="w-8 h-10 sm:w-10 sm:h-12 rounded-md sm:rounded-lg overflow-hidden border border-stone-200 block hover:opacity-80 transition-opacity shadow-2xs">
+                              <img src={url as string} alt={`${name(p)} extra ${j + 1}`} className="w-full h-full object-cover" />
+                            </a>
+                          ))}
+                        </div>
                       )}
                     </div>
-                    <div className="flex items-center gap-1.5 mt-2 flex-wrap justify-center">
-                      <p className="font-semibold text-navy-dark text-sm">{name(p)}</p>
-                      {p.is_verified && <VerifiedBadge size="sm" />}
-                    </div>
-                    <p className="text-gold-dark font-mono text-[11px] font-bold tracking-wider uppercase">
-                      {p.profile_id}
-                    </p>
-                    {/* Extra photos, if present */}
-                    {(p.images?.photo_2 || p.images?.photo_3) && (
-                      <div className="flex gap-2 mt-3">
-                        {[p.images?.photo_2, p.images?.photo_3].filter(Boolean).map((url, j) => (
-                          <a key={j} href={url as string} target="_blank" rel="noreferrer" className="w-12 h-16 rounded-lg overflow-hidden border border-gray-200 block">
-                            <img src={url as string} alt={`${name(p)} extra ${j + 1}`} className="w-full h-full object-cover" />
-                          </a>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
 
-              {/* Field sections */}
-              <div className="px-6 pb-6 mt-6 space-y-6">
-                {buildSections(profiles[0], profiles[1]).map((section) => (
-                  <div key={section.title} className="rounded-xl border border-gray-100 overflow-hidden">
-                    <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50/80 border-b border-gray-100">
-                      <section.icon className="w-3.5 h-3.5 text-gold" />
-                      <span className="text-xs font-bold uppercase tracking-wider text-gray-600">{section.title}</span>
+                {/* Comparison Sections */}
+                <div className="p-3 sm:p-6 md:p-8 space-y-6 sm:space-y-8 bg-stone-50/20">
+                  {buildSections(profiles[0], profiles[1]).map((section) => (
+                    <div key={section.title} className="rounded-xl sm:rounded-2xl border border-stone-200/60 overflow-hidden bg-white shadow-2xs">
+                      
+                      {/* Section Title */}
+                      <div className="flex items-center gap-2 px-4 py-3 sm:px-6 sm:py-3.5 bg-stone-50/80 border-b border-stone-100">
+                        <div className="p-1 sm:p-1.5 rounded-md sm:rounded-lg bg-white border border-stone-200/60 text-[#3A101E] shadow-2xs shrink-0">
+                          <section.icon className="w-3.5 h-3.5" />
+                        </div>
+                        <span className="font-serif text-xs font-bold uppercase tracking-wider text-[#3A101E]">{section.title}</span>
+                      </div>
+
+                      {/* Responsive Rows */}
+                      <div className="divide-y divide-stone-100">
+                        {section.rows.map((row) => {
+                          const differs = row.a !== row.b;
+                          return (
+                            <div 
+                              key={row.label} 
+                              className="grid grid-cols-2 md:grid-cols-[minmax(160px,200px)_1fr_1fr] text-xs sm:text-sm hover:bg-stone-50/40 transition-colors"
+                            >
+                              {/* Label: Full width on mobile, column 1 on desktop */}
+                              <div className="col-span-2 md:col-span-1 px-4 py-2 md:px-6 md:py-3.5 bg-stone-100/60 md:bg-transparent text-stone-500 md:text-stone-400 font-semibold md:font-medium text-[10px] sm:text-[11px] uppercase tracking-wider flex items-center border-b border-stone-100 md:border-none">
+                                {row.label}
+                              </div>
+                              
+                              {/* Candidate A Value */}
+                              <div className={cn(
+                                "px-3.5 py-2.5 sm:px-4 sm:py-3 md:px-6 md:py-3.5 border-r border-stone-100 flex flex-col justify-center text-stone-700 font-normal break-words", 
+                                differs && "bg-[#FAF6EE] text-[#3A101E] font-medium md:border-l-2 md:!border-l-[#D4AF37]"
+                              )}>
+                                <span className="md:hidden text-[9px] font-mono uppercase tracking-wider text-stone-400 mb-0.5 block truncate">
+                                  {firstName(profiles[0])}
+                                </span>
+                                <span>{row.a}</span>
+                              </div>
+
+                              {/* Candidate B Value */}
+                              <div className={cn(
+                                "px-3.5 py-2.5 sm:px-4 sm:py-3 md:px-6 md:py-3.5 flex flex-col justify-center text-stone-700 font-normal break-words", 
+                                differs && "bg-[#FAF6EE] text-[#3A101E] font-medium md:border-l-2 md:!border-l-[#D4AF37]"
+                              )}>
+                                <span className="md:hidden text-[9px] font-mono uppercase tracking-wider text-stone-400 mb-0.5 block truncate">
+                                  {firstName(profiles[1])}
+                                </span>
+                                <span>{row.b}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                    <div className="divide-y divide-gray-50">
-                      {section.rows.map((row) => {
-                        const differs = row.a !== row.b;
-                        return (
-                          <div key={row.label} className="grid grid-cols-[minmax(90px,140px)_1fr_1fr] text-xs sm:text-sm">
-                            <div className="px-3 py-2.5 text-gray-400 font-medium text-[11px] uppercase tracking-wider flex items-center">
-                              {row.label}
-                            </div>
-                            <div className={cn("px-3 py-2.5 border-l border-gray-50 flex items-center", differs && "bg-amber-50/60 font-semibold text-navy-dark")}>
-                              {row.a}
-                            </div>
-                            <div className={cn("px-3 py-2.5 border-l border-gray-50 flex items-center", differs && "bg-amber-50/60 font-semibold text-navy-dark")}>
-                              {row.b}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </motion.div>
       </motion.div>
     </AnimatePresence>,
