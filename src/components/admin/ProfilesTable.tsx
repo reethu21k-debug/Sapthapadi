@@ -15,6 +15,7 @@ import {
   Eye, Edit, Trash2, CheckCircle, XCircle, FileDown,
   ChevronLeft, ChevronRight, MoreVertical, Ban, RefreshCw,
   BadgeCheck, ShieldOff, Loader2, Users, HeartHandshake, CreditCard, XOctagon,
+  FileArchive, Files, X,
 } from "lucide-react";
 import { Profile, AuditAction } from "@/types";
 import { formatDate, cn, STATUS_COLORS, titleCase, calculateAge, PLAN_LABELS } from "@/lib/utils";
@@ -59,6 +60,30 @@ interface AssignTarget {
   email?: string;
 }
 
+// Used to drive the full-size photo lightbox opened via double-click on a
+// row's avatar thumbnail.
+interface PreviewImage {
+  url: string;
+  name: string;
+}
+
+/**
+ * Triggers a browser download from an already-fetched Blob without
+ * navigating away from the page (an <a href="/api/..."> download works for
+ * GET-only single-file downloads, but bulk download is a POST with a JSON
+ * body, so it has to go through fetch + a synthetic anchor click instead).
+ */
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 export function ProfilesTable({
   profiles,
   total,
@@ -76,6 +101,117 @@ export function ProfilesTable({
   const [meetingsModalProfile, setMeetingsModalProfile] = useState<Profile | null>(null);
   const [assigningTarget, setAssigningTarget] = useState<AssignTarget | null>(null);
   const MENU_WIDTH = 192; // matches w-48
+
+  // ─── Photo lightbox ───────────────────────────────────────────
+  // Double-clicking a row's avatar thumbnail opens the profile photo at
+  // full size in a centered overlay. Single click / row click behavior is
+  // untouched since this only binds to the <img> itself.
+  const [previewImage, setPreviewImage] = useState<PreviewImage | null>(null);
+
+  // Close the lightbox on Escape for keyboard users.
+  useEffect(() => {
+    if (!previewImage) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setPreviewImage(null);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [previewImage]);
+
+  // ─── Bulk selection & biodata download ───────────────────────
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [downloadModeMenuOpen, setDownloadModeMenuOpen] = useState(false);
+  const [downloadMenuPos, setDownloadMenuPos] = useState<{ top: number; left: number } | null>(null);
+  const downloadBtnRef = useRef<HTMLButtonElement | null>(null);
+  const [isBulkDownloading, setIsBulkDownloading] = useState(false);
+
+  // Selection is keyed by profile id and intentionally persists across
+  // pagination within the same client session (it's just local UI state,
+  // not written anywhere) so an admin can tick a few profiles, flip to the
+  // next page, tick a few more, then download all of them together.
+  const toggleSelected = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const currentPageAllSelected = profiles.length > 0 && profiles.every((p) => selectedIds.has(p.id));
+  const currentPageSomeSelected = profiles.some((p) => selectedIds.has(p.id));
+
+  const toggleSelectAllOnPage = () => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (currentPageAllSelected) {
+        profiles.forEach((p) => next.delete(p.id));
+      } else {
+        profiles.forEach((p) => next.add(p.id));
+      }
+      return next;
+    });
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const DOWNLOAD_MENU_WIDTH = 256; // matches w-64
+
+  const toggleDownloadMenu = () => {
+    if (downloadModeMenuOpen) {
+      setDownloadModeMenuOpen(false);
+      return;
+    }
+    const btn = downloadBtnRef.current;
+    if (btn) {
+      const rect = btn.getBoundingClientRect();
+      setDownloadMenuPos({
+        top: rect.bottom + 6,
+        left: Math.min(
+          Math.max(8, rect.right - DOWNLOAD_MENU_WIDTH),
+          window.innerWidth - DOWNLOAD_MENU_WIDTH - 8
+        ),
+      });
+    }
+    setDownloadModeMenuOpen(true);
+  };
+
+  const handleBulkDownload = async (mode: "zip" | "combined") => {
+    setDownloadModeMenuOpen(false);
+    if (selectedIds.size === 0) return;
+
+    setIsBulkDownloading(true);
+    try {
+      const res = await fetch("/api/biodata/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selectedIds), mode }),
+      });
+
+      if (!res.ok) {
+        const result = await res.json().catch(() => null);
+        throw new Error(result?.error || "Failed to generate biodatas");
+      }
+
+      const failedIds = res.headers.get("X-Failed-Profile-Ids");
+      const blob = await res.blob();
+      const timestamp = new Date().toISOString().slice(0, 10);
+      const filename = mode === "zip" ? `biodatas-${timestamp}.zip` : `biodatas-combined-${timestamp}.pdf`;
+      downloadBlob(blob, filename);
+
+      if (failedIds) {
+        const count = failedIds.split(",").filter(Boolean).length;
+        toast.error(`Downloaded, but ${count} profile${count > 1 ? "s" : ""} could not be included (missing data).`, { duration: 6000 });
+      } else {
+        toast.success(`Downloaded biodatas for ${selectedIds.size} profile${selectedIds.size > 1 ? "s" : ""}.`);
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to download biodatas";
+      toast.error(message);
+    } finally {
+      setIsBulkDownloading(false);
+    }
+  };
 
   const toggleMenu = (id: string) => {
     if (openMenu === id) {
@@ -111,6 +247,17 @@ export function ProfilesTable({
       window.removeEventListener("resize", close);
     };
   }, [openMenu]);
+
+  useEffect(() => {
+    if (!downloadModeMenuOpen) return;
+    const close = () => setDownloadModeMenuOpen(false);
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
+    return () => {
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("resize", close);
+    };
+  }, [downloadModeMenuOpen]);
 
   const handleAction = async (
     profileId: string,
@@ -267,6 +414,30 @@ export function ProfilesTable({
 
   const columns: ColumnDef<Profile>[] = [
     {
+      id: "select",
+      header: () => (
+        <input
+          type="checkbox"
+          checked={currentPageAllSelected}
+          ref={(el) => {
+            if (el) el.indeterminate = !currentPageAllSelected && currentPageSomeSelected;
+          }}
+          onChange={toggleSelectAllOnPage}
+          aria-label="Select all profiles on this page"
+          className="w-4 h-4 rounded border-gray-300 text-gold focus:ring-gold cursor-pointer"
+        />
+      ),
+      cell: ({ row }) => (
+        <input
+          type="checkbox"
+          checked={selectedIds.has(row.original.id)}
+          onChange={() => toggleSelected(row.original.id)}
+          aria-label={`Select ${[row.original.personal?.first_name, row.original.personal?.last_name].filter(Boolean).join(" ") || row.original.profile_id}`}
+          className="w-4 h-4 rounded border-gray-300 text-gold focus:ring-gold cursor-pointer"
+        />
+      ),
+    },
+    {
       accessorKey: "profile_id",
       header: "Profile ID",
       cell: ({ row }) => (
@@ -285,14 +456,22 @@ export function ProfilesTable({
       cell: ({ row }) => {
         const p = row.original.personal;
         const age = p?.date_of_birth ? calculateAge(p.date_of_birth) : null;
+        const photoUrl = row.original.images?.profile_photo;
+        const displayName = [p?.first_name, p?.last_name].filter(Boolean).join(" ") || "Unnamed";
         return (
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full overflow-hidden bg-gold/15 border border-gold/30 flex items-center justify-center flex-shrink-0 shadow-2xs">
-              {row.original.images?.profile_photo ? (
+              {photoUrl ? (
                 <img
-                  src={row.original.images.profile_photo}
+                  src={photoUrl}
                   alt={p?.first_name ? `${p.first_name}'s profile photo` : "Profile photo"}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover cursor-zoom-in"
+                  title="Click to view full photo"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setPreviewImage({ url: photoUrl, name: displayName });
+                  }}
                 />
               ) : (
                 <span className="text-gold-dark text-xs font-bold tracking-wider">
@@ -303,7 +482,7 @@ export function ProfilesTable({
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 flex-wrap">
                 <p className="font-semibold text-navy-dark text-sm truncate">
-                  {[p?.first_name, p?.last_name].filter(Boolean).join(" ") || "Unnamed"}
+                  {displayName}
                 </p>
                 {row.original.is_verified && <VerifiedBadge size="sm" />}
               </div>
@@ -639,6 +818,127 @@ export function ProfilesTable({
         onClose={() => setAssigningTarget(null)}
         onAssigned={() => router.refresh()}
       />
+
+      {/* Full-size photo lightbox — opened via double-click on a row's
+          avatar thumbnail. Portaled to <body> so it isn't clipped by the
+          table's scroll containers, same pattern as the action menus. */}
+      {previewImage && createPortal(
+        <AnimatePresence>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-6"
+            onClick={() => setPreviewImage(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="relative max-w-3xl max-h-[85vh]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setPreviewImage(null)}
+                className="absolute -top-10 right-0 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+                title="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <img
+                src={previewImage.url}
+                alt={previewImage.name}
+                className="max-w-full max-h-[85vh] rounded-xl shadow-2xl object-contain"
+              />
+              <p className="text-center text-white/80 text-sm font-medium mt-3">
+                {previewImage.name}
+              </p>
+            </motion.div>
+          </motion.div>
+        </AnimatePresence>,
+        document.body
+      )}
+
+      {/* Bulk selection toolbar — only appears once at least one profile is selected */}
+      <AnimatePresence>
+        {selectedIds.size > 0 && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.15 }}
+            className="overflow-hidden border-b border-gold/20 bg-gold/5"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 py-3">
+              <div className="flex items-center gap-2.5">
+                <span className="text-xs font-semibold text-navy-dark">
+                  {selectedIds.size} profile{selectedIds.size > 1 ? "s" : ""} selected
+                </span>
+                <button
+                  onClick={clearSelection}
+                  className="p-1 rounded-md hover:bg-gold/15 text-gray-500 hover:text-navy-dark transition-colors"
+                  title="Clear selection"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <div className="relative">
+                <button
+                  ref={downloadBtnRef}
+                  onClick={toggleDownloadMenu}
+                  disabled={isBulkDownloading}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-navy-dark text-white hover:bg-gold hover:text-navy-dark text-xs font-semibold uppercase tracking-wider shadow-md transition-all disabled:opacity-60"
+                >
+                  {isBulkDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
+                  {isBulkDownloading ? "Preparing..." : "Download Biodatas"}
+                </button>
+
+                {downloadModeMenuOpen && !isBulkDownloading && downloadMenuPos && createPortal(
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setDownloadModeMenuOpen(false)} />
+                    <AnimatePresence>
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: 4 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 4 }}
+                        transition={{ duration: 0.15 }}
+                        style={{ position: "fixed", top: downloadMenuPos.top, left: downloadMenuPos.left }}
+                        className="w-64 bg-white border border-gray-200/80 rounded-xl shadow-xl py-1.5 z-50 overflow-hidden"
+                      >
+                        <button
+                          onClick={() => handleBulkDownload("zip")}
+                          className="w-full flex items-start gap-2.5 px-3.5 py-2.5 text-left hover:bg-gray-50 transition-colors"
+                        >
+                          <FileArchive className="w-4 h-4 text-purple-600 flex-shrink-0 mt-0.5" />
+                          <span>
+                            <span className="block text-xs font-semibold text-navy-dark">Separate PDFs (ZIP)</span>
+                            <span className="block text-[11px] text-gray-400">One biodata PDF per profile</span>
+                          </span>
+                        </button>
+                        <button
+                          onClick={() => handleBulkDownload("combined")}
+                          className="w-full flex items-start gap-2.5 px-3.5 py-2.5 text-left hover:bg-gray-50 transition-colors"
+                        >
+                          <Files className="w-4 h-4 text-purple-600 flex-shrink-0 mt-0.5" />
+                          <span>
+                            <span className="block text-xs font-semibold text-navy-dark">Combined PDF</span>
+                            <span className="block text-[11px] text-gray-400">All biodatas merged into one file</span>
+                          </span>
+                        </button>
+                      </motion.div>
+                    </AnimatePresence>
+                  </>,
+                  document.body
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="overflow-x-auto">
         <table className="w-full min-w-[860px] text-left border-collapse">
           <thead>
@@ -657,7 +957,10 @@ export function ProfilesTable({
               table.getRowModel().rows.map((row) => (
                 <tr
                   key={row.id}
-                  className="hover:bg-gray-50/60 transition-colors group"
+                  className={cn(
+                    "hover:bg-gray-50/60 transition-colors group",
+                    selectedIds.has(row.original.id) && "bg-gold/5"
+                  )}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <td key={cell.id} className="py-3 px-3 sm:px-4 first:pl-4 sm:first:pl-6 last:pr-4 sm:last:pr-6">

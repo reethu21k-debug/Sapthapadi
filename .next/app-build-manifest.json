@@ -16,15 +16,10 @@
       "static/chunks/main-app.js",
       "static/chunks/app/not-found.js"
     ],
-    "/admin/layout": [
+    "/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/admin/layout.js"
-    ],
-    "/admin/subscriptions/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/admin/subscriptions/page.js"
+      "static/chunks/app/page.js"
     ],
     "/manifest.webmanifest/route": [
       "static/chunks/webpack.js",
@@ -36,35 +31,40 @@
       "static/chunks/main-app.js",
       "static/chunks/app/_not-found/page.js"
     ],
-    "/admin/profiles/page": [
+    "/admin/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/admin/profiles/page.js"
+      "static/chunks/app/admin/layout.js"
     ],
     "/admin/dashboard/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/admin/dashboard/page.js"
     ],
-    "/admin/profiles/create/page": [
+    "/admin/profiles/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/admin/profiles/create/page.js"
+      "static/chunks/app/admin/profiles/page.js"
     ],
-    "/admin/profiles/[id]/edit/page": [
+    "/(auth)/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/admin/profiles/[id]/edit/page.js"
+      "static/chunks/app/(auth)/layout.js"
     ],
-    "/api/profiles/check-duplicate/route": [
+    "/(auth)/login/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/api/profiles/check-duplicate/route.js"
+      "static/chunks/app/(auth)/login/page.js"
     ],
-    "/admin/users/page": [
+    "/api/biodata/bulk/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/admin/users/page.js"
+      "static/chunks/app/api/biodata/bulk/route.js"
+    ],
+    "/admin/subscriptions/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/admin/subscriptions/page.js"
     ]
   }
 }

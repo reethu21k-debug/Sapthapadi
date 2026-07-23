@@ -148,6 +148,20 @@ export function ProfileFilters() {
           <option value="false">Unverified Only</option>
         </select>
 
+        {/* Subscription Filter */}
+        <select
+          value={searchParams.get("subscription") || ""}
+          onChange={(e) => updateFilter("subscription", e.target.value)}
+          className={getSelectClass("subscription")}
+        >
+          <option value="">All Subscriptions</option>
+          <option value="unsubscribed">Unsubscribed</option>
+          <option value="six_months">6 Months</option>
+          <option value="one_year">1 Year</option>
+          <option value="premium">Premium</option>
+          <option value="vip">VIP</option>
+        </select>
+
         <div className="h-5 w-px bg-gray-200 hidden sm:block mx-0.5" />
 
         <select

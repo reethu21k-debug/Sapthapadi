@@ -16,6 +16,7 @@ interface SearchParams {
   state?: string;
   district?: string;
   marital_status?: string;
+  subscription?: string;
   search?: string;
   page?: string;
   age_min?: string;
@@ -63,6 +64,60 @@ export default async function ProfilesPage({
   if (params.state) query = query.ilike("state", `%${params.state}%`);
   if (params.district) query = query.ilike("district", `%${params.district}%`);
   if (params.marital_status) query = query.eq("marital_status", params.marital_status);
+
+  // Subscription filter: `profiles` has no subscription column of its own —
+  // plan/status lives on the separate `subscriptions` table, linked via
+  // profile_id OR user_id. So we first resolve which profiles/users match,
+  // then constrain the main query with .in(...) / .not(...in...).
+  if (params.subscription) {
+    if (params.subscription === "unsubscribed") {
+      const { data: activeSubs } = await supabase
+        .from("subscriptions")
+        .select("profile_id, user_id")
+        .eq("status", "active");
+
+      const subscribedProfileIds = (activeSubs || [])
+        .map((s) => s.profile_id)
+        .filter((id): id is string => Boolean(id));
+      const subscribedUserIds = (activeSubs || [])
+        .map((s) => s.user_id)
+        .filter((id): id is string => Boolean(id));
+
+      if (subscribedProfileIds.length > 0) {
+        query = query.not("id", "in", `(${subscribedProfileIds.join(",")})`);
+      }
+      if (subscribedUserIds.length > 0) {
+        query = query.or(
+          `user_id.is.null,user_id.not.in.(${subscribedUserIds.join(",")})`
+        );
+      }
+    } else {
+      const { data: matchingSubs } = await supabase
+        .from("subscriptions")
+        .select("profile_id, user_id")
+        .eq("status", "active")
+        .eq("plan", params.subscription);
+
+      const matchingProfileIds = (matchingSubs || [])
+        .map((s) => s.profile_id)
+        .filter((id): id is string => Boolean(id));
+      const matchingUserIds = (matchingSubs || [])
+        .map((s) => s.user_id)
+        .filter((id): id is string => Boolean(id));
+
+      const orParts: string[] = [];
+      if (matchingProfileIds.length > 0) orParts.push(`id.in.(${matchingProfileIds.join(",")})`);
+      if (matchingUserIds.length > 0) orParts.push(`user_id.in.(${matchingUserIds.join(",")})`);
+
+      if (orParts.length > 0) {
+        query = query.or(orParts.join(","));
+      } else {
+        // No subscriptions match this plan at all — force an empty result
+        // instead of silently returning everything.
+        query = query.eq("id", "00000000-0000-0000-0000-000000000000");
+      }
+    }
+  }
 
   // Age range filter: convert age (years) into a date_of_birth range.
   // An older max age = an earlier (smaller) date_of_birth lower-bound.
@@ -123,10 +178,7 @@ export default async function ProfilesPage({
     .map((p) => p.user_id)
     .filter((id): id is string => Boolean(id));
 
-  const subscriptionsByProfile: Record<
-    string,
-    { id: string; plan: string; status: string; expiry_date: string }
-  > = {};
+  const subscriptionsByProfile: Record<string, { id: string; plan: string; status: string; expiry_date: string }> = {};
 
   if (profileIds.length > 0 || userIds.length > 0) {
     const orParts: string[] = [];
