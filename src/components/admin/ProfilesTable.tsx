@@ -15,7 +15,7 @@ import {
   Eye, Edit, Trash2, CheckCircle, XCircle, FileDown,
   ChevronLeft, ChevronRight, MoreVertical, Ban, RefreshCw,
   BadgeCheck, ShieldOff, Loader2, Users, HeartHandshake, CreditCard, XOctagon,
-  FileArchive, Files, X,
+  FileArchive, Files, X, Columns3,
 } from "lucide-react";
 import { Profile, AuditAction } from "@/types";
 import { formatDate, cn, STATUS_COLORS, titleCase, calculateAge, PLAN_LABELS } from "@/lib/utils";
@@ -24,6 +24,7 @@ import { VerifiedBadge } from "@/components/shared/VerifiedBadge";
 import { logAuditAction, notifyProfileOwner, sendBestEffortEmail } from "@/lib/audit";
 import { MatchMeetingPartnersModal } from "@/components/admin/MatchMeetingPartnersModal";
 import { AssignSubscriptionModal } from "@/components/admin/AssignSubscriptionModal";
+import { ProfileCompareModal } from "@/components/admin/ProfileCompareModal";
 
 interface PlanOption {
   id: string;
@@ -124,6 +125,13 @@ export function ProfilesTable({
   const [downloadMenuPos, setDownloadMenuPos] = useState<{ top: number; left: number } | null>(null);
   const downloadBtnRef = useRef<HTMLButtonElement | null>(null);
   const [isBulkDownloading, setIsBulkDownloading] = useState(false);
+
+  // ─── Compare profiles side-by-side ────────────────────────────
+  // Only enabled when exactly two profiles are selected. Ids are stored as
+  // a tuple so ProfileCompareModal can fetch both directly by id (the two
+  // selected profiles may live on different pages, since selection persists
+  // across pagination — see toggleSelected below).
+  const [compareIds, setCompareIds] = useState<[string, string] | null>(null);
 
   // Selection is keyed by profile id and intentionally persists across
   // pagination within the same client session (it's just local UI state,
@@ -818,6 +826,7 @@ export function ProfilesTable({
         onClose={() => setAssigningTarget(null)}
         onAssigned={() => router.refresh()}
       />
+      <ProfileCompareModal ids={compareIds} onClose={() => setCompareIds(null)} />
 
       {/* Full-size photo lightbox — opened via double-click on a row's
           avatar thumbnail. Portaled to <body> so it isn't clipped by the
@@ -885,54 +894,68 @@ export function ProfilesTable({
                 </button>
               </div>
 
-              <div className="relative">
-                <button
-                  ref={downloadBtnRef}
-                  onClick={toggleDownloadMenu}
-                  disabled={isBulkDownloading}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-navy-dark text-white hover:bg-gold hover:text-navy-dark text-xs font-semibold uppercase tracking-wider shadow-md transition-all disabled:opacity-60"
-                >
-                  {isBulkDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
-                  {isBulkDownloading ? "Preparing..." : "Download Biodatas"}
-                </button>
-
-                {downloadModeMenuOpen && !isBulkDownloading && downloadMenuPos && createPortal(
-                  <>
-                    <div className="fixed inset-0 z-40" onClick={() => setDownloadModeMenuOpen(false)} />
-                    <AnimatePresence>
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.95, y: 4 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: 4 }}
-                        transition={{ duration: 0.15 }}
-                        style={{ position: "fixed", top: downloadMenuPos.top, left: downloadMenuPos.left }}
-                        className="w-64 bg-white border border-gray-200/80 rounded-xl shadow-xl py-1.5 z-50 overflow-hidden"
-                      >
-                        <button
-                          onClick={() => handleBulkDownload("zip")}
-                          className="w-full flex items-start gap-2.5 px-3.5 py-2.5 text-left hover:bg-gray-50 transition-colors"
-                        >
-                          <FileArchive className="w-4 h-4 text-purple-600 flex-shrink-0 mt-0.5" />
-                          <span>
-                            <span className="block text-xs font-semibold text-navy-dark">Separate PDFs (ZIP)</span>
-                            <span className="block text-[11px] text-gray-400">One biodata PDF per profile</span>
-                          </span>
-                        </button>
-                        <button
-                          onClick={() => handleBulkDownload("combined")}
-                          className="w-full flex items-start gap-2.5 px-3.5 py-2.5 text-left hover:bg-gray-50 transition-colors"
-                        >
-                          <Files className="w-4 h-4 text-purple-600 flex-shrink-0 mt-0.5" />
-                          <span>
-                            <span className="block text-xs font-semibold text-navy-dark">Combined PDF</span>
-                            <span className="block text-[11px] text-gray-400">All biodatas merged into one file</span>
-                          </span>
-                        </button>
-                      </motion.div>
-                    </AnimatePresence>
-                  </>,
-                  document.body
+              <div className="flex items-center gap-2.5">
+                {/* Compare button — only ever shown for an exact pair, since
+                    the comparison view is a fixed two-column layout. */}
+                {selectedIds.size === 2 && (
+                  <button
+                    onClick={() => setCompareIds(Array.from(selectedIds) as [string, string])}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gold/40 bg-white text-navy-dark hover:bg-gold hover:text-navy-dark text-xs font-semibold uppercase tracking-wider shadow-2xs transition-all"
+                  >
+                    <Columns3 className="w-4 h-4" />
+                    Compare Side-by-Side
+                  </button>
                 )}
+
+                <div className="relative">
+                  <button
+                    ref={downloadBtnRef}
+                    onClick={toggleDownloadMenu}
+                    disabled={isBulkDownloading}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-navy-dark text-white hover:bg-gold hover:text-navy-dark text-xs font-semibold uppercase tracking-wider shadow-md transition-all disabled:opacity-60"
+                  >
+                    {isBulkDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
+                    {isBulkDownloading ? "Preparing..." : "Download Biodatas"}
+                  </button>
+
+                  {downloadModeMenuOpen && !isBulkDownloading && downloadMenuPos && createPortal(
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setDownloadModeMenuOpen(false)} />
+                      <AnimatePresence>
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.95, y: 4 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95, y: 4 }}
+                          transition={{ duration: 0.15 }}
+                          style={{ position: "fixed", top: downloadMenuPos.top, left: downloadMenuPos.left }}
+                          className="w-64 bg-white border border-gray-200/80 rounded-xl shadow-xl py-1.5 z-50 overflow-hidden"
+                        >
+                          <button
+                            onClick={() => handleBulkDownload("zip")}
+                            className="w-full flex items-start gap-2.5 px-3.5 py-2.5 text-left hover:bg-gray-50 transition-colors"
+                          >
+                            <FileArchive className="w-4 h-4 text-purple-600 flex-shrink-0 mt-0.5" />
+                            <span>
+                              <span className="block text-xs font-semibold text-navy-dark">Separate PDFs (ZIP)</span>
+                              <span className="block text-[11px] text-gray-400">One biodata PDF per profile</span>
+                            </span>
+                          </button>
+                          <button
+                            onClick={() => handleBulkDownload("combined")}
+                            className="w-full flex items-start gap-2.5 px-3.5 py-2.5 text-left hover:bg-gray-50 transition-colors"
+                          >
+                            <Files className="w-4 h-4 text-purple-600 flex-shrink-0 mt-0.5" />
+                            <span>
+                              <span className="block text-xs font-semibold text-navy-dark">Combined PDF</span>
+                              <span className="block text-[11px] text-gray-400">All biodatas merged into one file</span>
+                            </span>
+                          </button>
+                        </motion.div>
+                      </AnimatePresence>
+                    </>,
+                    document.body
+                  )}
+                </div>
               </div>
             </div>
           </motion.div>
