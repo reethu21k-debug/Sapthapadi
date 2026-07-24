@@ -35,12 +35,23 @@ interface Props {
   requests: Record<string, unknown>[];
   totalCompleted: number;
   totalPending: number;
+  currentUserRole?: "admin" | "manager";
+  assignedProfileIds?: string[];
 }
 
-export function MatchMeetingsManager({ requests: initialRequests, totalCompleted, totalPending }: Props) {
+export function MatchMeetingsManager({
+  requests: initialRequests,
+  totalCompleted,
+  totalPending,
+  currentUserRole,
+  assignedProfileIds,
+}: Props) {
   const router = useRouter();
   const [requests, setRequests] = useState(initialRequests);
   const [activeTab, setActiveTab] = useState<"all" | MatchMeetingStatus>("all");
+  const [scope, setScope] = useState<"assigned" | "all">(
+    currentUserRole === "manager" && assignedProfileIds ? "assigned" : "all"
+  );
   const [acceptTarget, setAcceptTarget] = useState<Record<string, unknown> | null>(null);
   const [rejectTarget, setRejectTarget] = useState<Record<string, unknown> | null>(null);
   const [meetingDate, setMeetingDate] = useState("");
@@ -49,7 +60,15 @@ export function MatchMeetingsManager({ requests: initialRequests, totalCompleted
   const [isSaving, setIsSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  const filtered = activeTab === "all" ? requests : requests.filter((r) => r.status === activeTab);
+  const scopedRequests =
+    scope === "assigned" && assignedProfileIds
+      ? requests.filter((r) => {
+          const profile = r.profiles as Record<string, unknown> | null;
+          return profile && assignedProfileIds.includes(String(profile.id));
+        })
+      : requests;
+
+  const filtered = activeTab === "all" ? scopedRequests : scopedRequests.filter((r) => r.status === activeTab);
 
   const getPersonName = (r: Record<string, unknown>) => {
     const requester = r.users as Record<string, unknown> | null;
@@ -251,6 +270,30 @@ export function MatchMeetingsManager({ requests: initialRequests, totalCompleted
             <p className="text-xs text-gray-400">Review and manage requests from members</p>
           </div>
         </div>
+
+        {/* Scope toggle — Managers only */}
+        {currentUserRole === "manager" && assignedProfileIds && (
+          <div className="flex items-center gap-2 px-5 pt-4">
+            <button
+              onClick={() => setScope("assigned")}
+              className={cn(
+                "px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all",
+                scope === "assigned" ? "bg-gold text-navy-dark border-gold" : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+              )}
+            >
+              My Assigned ({assignedProfileIds.length})
+            </button>
+            <button
+              onClick={() => setScope("all")}
+              className={cn(
+                "px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all",
+                scope === "all" ? "bg-gold text-navy-dark border-gold" : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+              )}
+            >
+              All Requests
+            </button>
+          </div>
+        )}
 
         <div className="flex items-center gap-1 px-5 pt-3 overflow-x-auto">
           {TABS.map((t) => (

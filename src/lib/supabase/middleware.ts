@@ -38,14 +38,14 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
 
-    // Check admin role
+    // Check admin/manager role
     const { data: userData } = await supabase
       .from("users")
       .select("role")
       .eq("id", user.id)
       .single();
 
-    if (userData?.role !== "admin") {
+    if (userData?.role !== "admin" && userData?.role !== "manager") {
       return NextResponse.redirect(new URL("/user/dashboard", request.url));
     }
   }
@@ -57,10 +57,9 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  // Redirect authenticated users away from auth pages
-// Redirect authenticated users away from auth pages.
+  // Redirect authenticated users away from auth pages.
   // Note: we only redirect away from /login when we can positively confirm
-  // an admin role. If the public.users row is missing (userData is null),
+  // an admin/manager role. If the public.users row is missing (userData is null),
   // falling through to /user/dashboard is safe because the layout there
   // self-heals by creating the missing row — it does NOT bounce back to
   // /login, so this can't turn into a redirect loop.
@@ -71,7 +70,7 @@ export async function updateSession(request: NextRequest) {
       .eq("id", user.id)
       .single();
 
-    if (userData?.role === "admin") {
+    if (userData?.role === "admin" || userData?.role === "manager") {
       return NextResponse.redirect(new URL("/admin/dashboard", request.url));
     }
     return NextResponse.redirect(new URL("/user/dashboard", request.url));

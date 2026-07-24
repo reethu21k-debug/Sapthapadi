@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { createAdminClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { ProfilesTable } from "@/components/admin/ProfilesTable";
 import { ProfileFilters } from "@/components/admin/ProfileFiltersBar";
 import Link from "next/link";
@@ -36,6 +36,33 @@ export default async function ProfilesPage({
   // rows out (no error, just an empty result), so assigned subscriptions
   // never appeared in the table even though the insert itself succeeded.
   const supabase = await createAdminClient();
+
+  // Need the actual logged-in user's role too — the admin client above has
+  // no session attached, so this uses the regular session-aware client
+  // purely to identify who's asking (its own queries are still subject to
+  // RLS, which is fine — we only need the `role` column here).
+  const sessionClient = await createClient();
+  const { data: { user: currentUser } } = await sessionClient.auth.getUser();
+  const { data: currentUserRecord } = await sessionClient
+    .from("users")
+    .select("role")
+    .eq("id", currentUser!.id)
+    .single();
+  const currentUserRole = currentUserRecord?.role as "admin" | "manager" | undefined;
+
+  // Only Admins can assign profiles to Managers, so only fetch the manager
+  // list when it's actually going to be used.
+  let managers: { id: string; full_name?: string; email: string }[] = [];
+  if (currentUserRole === "admin") {
+    const { data } = await supabase
+      .from("users")
+      .select("id, full_name, email")
+      .eq("role", "manager")
+      .eq("is_active", true)
+      .order("full_name");
+    managers = data || [];
+  }
+
   const page = parseInt(params.page || "1");
   const limit = 20;
   const offset = (page - 1) * limit;
@@ -237,6 +264,8 @@ export default async function ProfilesPage({
         matchMeetingCounts={matchMeetingCounts}
         plans={plans || []}
         subscriptionsByProfile={subscriptionsByProfile}
+        currentUserRole={currentUserRole}
+        managers={managers}
       />
     </div>
   );

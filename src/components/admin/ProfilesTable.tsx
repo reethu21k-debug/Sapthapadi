@@ -15,7 +15,7 @@ import {
   Eye, Edit, Trash2, CheckCircle, XCircle, FileDown,
   ChevronLeft, ChevronRight, MoreVertical, Ban, RefreshCw,
   BadgeCheck, ShieldOff, Loader2, Users, HeartHandshake, CreditCard, XOctagon,
-  FileArchive, Files, X, Columns3,
+  FileArchive, Files, X, Columns3, UserCog,
 } from "lucide-react";
 import { Profile, AuditAction } from "@/types";
 import { formatDate, cn, STATUS_COLORS, titleCase, calculateAge, PLAN_LABELS } from "@/lib/utils";
@@ -25,6 +25,7 @@ import { logAuditAction, notifyProfileOwner, sendBestEffortEmail } from "@/lib/a
 import { MatchMeetingPartnersModal } from "@/components/admin/MatchMeetingPartnersModal";
 import { AssignSubscriptionModal } from "@/components/admin/AssignSubscriptionModal";
 import { ProfileCompareModal } from "@/components/admin/ProfileCompareModal";
+import { AssignManagersToProfileModal } from "@/components/admin/AssignManagersToProfileModal";
 
 interface PlanOption {
   id: string;
@@ -50,6 +51,8 @@ interface Props {
   matchMeetingCounts?: Record<string, number>;
   plans?: PlanOption[];
   subscriptionsByProfile?: Record<string, SubscriptionSummary>;
+  currentUserRole?: "admin" | "manager";
+  managers?: { id: string; full_name?: string; email: string }[];
 }
 
 // Either user_id or profile_id will be set — profile_id alone covers
@@ -93,6 +96,8 @@ export function ProfilesTable({
   matchMeetingCounts = {},
   plans = [],
   subscriptionsByProfile = {},
+  currentUserRole,
+  managers = [],
 }: Props) {
   const router = useRouter();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -101,6 +106,7 @@ export function ProfilesTable({
   const menuBtnRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [meetingsModalProfile, setMeetingsModalProfile] = useState<Profile | null>(null);
   const [assigningTarget, setAssigningTarget] = useState<AssignTarget | null>(null);
+  const [assigningManagersProfile, setAssigningManagersProfile] = useState<Profile | null>(null);
   const MENU_WIDTH = 192; // matches w-48
 
   // ─── Photo lightbox ───────────────────────────────────────────
@@ -777,6 +783,18 @@ export function ProfilesTable({
                         </button>
                       )}
 
+                      {currentUserRole === "admin" && (
+                        <button
+                          onClick={() => {
+                            setAssigningManagersProfile(p);
+                            setOpenMenu(null);
+                          }}
+                          className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-indigo-600 hover:bg-indigo-50/80 transition-colors text-left"
+                        >
+                          <UserCog className="w-3.5 h-3.5" /> Assign to Manager(s)
+                        </button>
+                      )}
+
                       <a
                         href={`/api/biodata/${p.id}`}
                         target="_blank"
@@ -827,6 +845,12 @@ export function ProfilesTable({
         onAssigned={() => router.refresh()}
       />
       <ProfileCompareModal ids={compareIds} onClose={() => setCompareIds(null)} />
+      <AssignManagersToProfileModal
+        profile={assigningManagersProfile}
+        managers={managers}
+        onClose={() => setAssigningManagersProfile(null)}
+        onSaved={() => router.refresh()}
+      />
 
       {/* Full-size photo lightbox — opened via double-click on a row's
           avatar thumbnail. Portaled to <body> so it isn't clipped by the

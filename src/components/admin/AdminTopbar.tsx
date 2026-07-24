@@ -15,6 +15,12 @@ interface Props {
   user: AppUser;
 }
 
+const ROLE_LABELS: Record<AppUser["role"], string> = {
+  admin: "Administrator",
+  manager: "Manager",
+  user: "Member",
+};
+
 export function AdminTopbar({ user }: Props) {
   const router = useRouter();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -103,7 +109,7 @@ export function AdminTopbar({ user }: Props) {
                 {user.full_name || "Admin"}
               </p>
               <p className="text-[11px] font-medium text-gray-400 mt-1 leading-none">
-                Administrator
+                {ROLE_LABELS[user.role] ?? "Member"}
               </p>
             </div>
 

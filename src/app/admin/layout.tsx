@@ -28,7 +28,7 @@ export default async function AdminLayout({
     .eq("id", user.id)
     .single();
 
-  if (!userData || userData.role !== "admin") redirect("/user/dashboard");
+  if (!userData || !["admin", "manager"].includes(userData.role)) redirect("/user/dashboard");
 
   return (
     <div className="min-h-screen bg-gray-50 flex">

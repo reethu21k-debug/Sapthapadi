@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
-import { Ban, RefreshCw, Search, Users, Shield, UserX, UserCheck, CreditCard } from "lucide-react";
+import { Ban, RefreshCw, Search, Users, Shield, ShieldCheck, UserX, UserCheck, CreditCard } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatDate, cn, PLAN_LABELS, getDaysRemaining } from "@/lib/utils";
 import { AssignSubscriptionModal } from "@/components/admin/AssignSubscriptionModal";
@@ -120,6 +120,13 @@ export function UsersManager({ users, plans = [] }: Props) {
                 const activeSub = subscriptions.find((s: Record<string, unknown>) => s.status === "active");
                 const daysLeft = activeSub?.expiry_date ? getDaysRemaining(String(activeSub.expiry_date)) : null;
                 const initial = String(u.full_name || u.email || "?")[0].toUpperCase();
+                const role = String(u.role || "user");
+                // Only plain member accounts (role: "user") are editable from this
+                // table. Admins and Managers are managed from their own dedicated
+                // screens (/admin/settings and /admin/managers respectively) — see
+                // migration 0011_manager_accounts.sql, which scopes the "Managers
+                // can update member users" RLS policy to role = 'user' only.
+                const isEditableMember = role === "user";
 
                 return (
                   <tr key={String(u.id)} className="hover:bg-gray-50/60 transition-colors group">
@@ -141,10 +148,15 @@ export function UsersManager({ users, plans = [] }: Props) {
                     <td className="py-3.5 px-5">
                       <span className={cn(
                         "px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider inline-flex items-center gap-1 border shadow-2xs",
-                        u.role === "admin" ? "bg-navy-dark text-white border-navy-dark" : "bg-gray-100 text-gray-600 border-gray-200"
+                        role === "admin"
+                          ? "bg-navy-dark text-white border-navy-dark"
+                          : role === "manager"
+                          ? "bg-gold/15 text-gold-dark border-gold/30"
+                          : "bg-gray-100 text-gray-600 border-gray-200"
                       )}>
-                        {u.role === "admin" && <Shield className="w-3 h-3 text-gold" />}
-                        {String(u.role || "member")}
+                        {role === "admin" && <Shield className="w-3 h-3 text-gold" />}
+                        {role === "manager" && <ShieldCheck className="w-3 h-3 text-gold-dark" />}
+                        {role === "admin" ? "Admin" : role === "manager" ? "Manager" : "Member"}
                       </span>
                     </td>
 
@@ -202,7 +214,7 @@ export function UsersManager({ users, plans = [] }: Props) {
 
                     <td className="py-3.5 px-5">
                       <div className="flex items-center justify-end gap-1.5 flex-wrap">
-                        {u.role !== "admin" && (
+                        {isEditableMember && (
                           <button
                             onClick={() => setAssigningUser({ id: String(u.id), full_name: u.full_name as string, email: u.email as string })}
                             className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl font-semibold transition-all shadow-2xs border text-sky-700 bg-sky-50 border-sky-200/80 hover:bg-sky-100"
@@ -212,7 +224,7 @@ export function UsersManager({ users, plans = [] }: Props) {
                           </button>
                         )}
 
-                        {u.role !== "admin" ? (
+                        {isEditableMember ? (
                           <motion.button
                             whileTap={{ scale: 0.96 }}
                             onClick={() => toggleActive(String(u.id), Boolean(u.is_active))}
@@ -234,7 +246,9 @@ export function UsersManager({ users, plans = [] }: Props) {
                             )}
                           </motion.button>
                         ) : (
-                          <span className="text-gray-300 text-xs font-medium italic">—</span>
+                          <span className="text-gray-300 text-xs font-medium italic">
+                            {role === "manager" ? "Manage in Managers" : "—"}
+                          </span>
                         )}
                       </div>
                     </td>

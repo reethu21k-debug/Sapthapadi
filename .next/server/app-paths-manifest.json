@@ -1,8 +1,7 @@
 {
-  "/admin/shared-profiles/page": "app/admin/shared-profiles/page.js",
+  "/manifest.webmanifest/route": "app/manifest.webmanifest/route.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/admin/managers/page": "app/admin/managers/page.js",
   "/user/profiles/page": "app/user/profiles/page.js",
-  "/user/profiles/[id]/page": "app/user/profiles/[id]/page.js",
-  "/user/favorites/page": "app/user/favorites/page.js",
-  "/admin/match-meetings/page": "app/admin/match-meetings/page.js",
-  "/user/match-meetings/page": "app/user/match-meetings/page.js"
+  "/admin/profiles/page": "app/admin/profiles/page.js"
 }

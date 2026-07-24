@@ -61,7 +61,10 @@ export function LoginForm() {
 
       toast.success("Welcome back!");
 
-      if (userData?.role === "admin") {
+      // Admins AND Managers both land in the admin panel — see
+      // migration 0011_manager_accounts.sql and AdminLayout's own
+      // ["admin", "manager"].includes(role) check, which this must match.
+      if (userData?.role === "admin" || userData?.role === "manager") {
         router.push("/admin/dashboard");
       } else {
         router.push("/user/dashboard");

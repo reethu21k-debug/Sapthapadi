@@ -8,23 +8,25 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, Users, UserCheck, CreditCard, BarChart2,
   Settings, Share2, ClipboardList, ChevronLeft, ChevronRight,
-  BadgeDollarSign, CalendarHeart,
+  BadgeDollarSign, CalendarHeart, UserCog, ShieldCheck,
 } from "lucide-react";
 import { cn, getInitials } from "@/lib/utils";
 import { AppUser } from "@/types";
 import { useUIStore } from "@/lib/store";
 
-const NAV_ITEMS = [
+const BASE_NAV_ITEMS = [
   { href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/admin/profiles", icon: Users, label: "Profiles" },
+  { href: "/admin/assigned-profiles", icon: UserCog, label: "Assigned Profiles", managerOnly: true },
   { href: "/admin/users", icon: UserCheck, label: "Users" },
+  { href: "/admin/managers", icon: ShieldCheck, label: "Managers", adminOnly: true },
   { href: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions" },
   { href: "/admin/shared-profiles", icon: Share2, label: "Share Profiles" },
   { href: "/admin/match-meetings", icon: CalendarHeart, label: "Match Meetings" },
   { href: "/admin/plans", icon: BadgeDollarSign, label: "Plans" },
   { href: "/admin/analytics", icon: BarChart2, label: "Analytics" },
   { href: "/admin/audit-logs", icon: ClipboardList, label: "Audit Logs" },
-  { href: "/admin/settings", icon: Settings, label: "Settings" },
+  { href: "/admin/settings", icon: Settings, label: "Settings", adminOnly: true },
 ];
 
 interface Props {
@@ -35,6 +37,17 @@ export function AdminSidebar({ user }: Props) {
   const pathname = usePathname();
   const { sidebarOpen, toggleSidebar } = useUIStore();
   const [isDesktop, setIsDesktop] = useState(false);
+
+  const NAV_ITEMS = BASE_NAV_ITEMS.filter((item) => {
+    if (item.adminOnly) return user.role === "admin";
+    if (item.managerOnly) return user.role === "manager";
+    return true;
+  });
+
+  // Sidebar header label reflects the logged-in account's actual role,
+  // rather than always reading "Admin Panel" — Managers get their own
+  // "Manager Panel" label while sharing the same underlying shell/nav.
+  const panelLabel = user.role === "manager" ? "Manager Panel" : "Admin Panel";
 
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 1024px)");
@@ -107,7 +120,7 @@ export function AdminSidebar({ user }: Props) {
                   Saptapadi
                 </p>
                 <p className="text-gold/60 text-[9px] tracking-[2.5px] font-semibold uppercase">
-                  Admin Panel
+                  {panelLabel}
                 </p>
               </motion.div>
             )}
@@ -120,8 +133,10 @@ export function AdminSidebar({ user }: Props) {
         {NAV_ITEMS.map((item, index) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
           
-          // Add subtle visual separation before system/analytics tools
-          const isDivider = index === 7; 
+          // Add subtle visual separation before system/analytics tools.
+          // Anchored to a stable href rather than a fixed index, since the
+          // array length now varies by role.
+          const isDivider = item.href === "/admin/plans";
 
           return (
             <div key={item.href}>

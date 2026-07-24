@@ -15,7 +15,7 @@ export type ProfileStatus = "pending" | "approved" | "rejected" | "deactivated" 
 export type SubscriptionPlan = "free" | "six_months" | "one_year" | "premium" | "vip";
 export type SubscriptionStatus = "active" | "pending" | "expired" | "cancelled";
 export type PaymentMode = "cash" | "upi" | "card" | "bank_transfer";
-export type UserRole = "admin" | "user";
+export type UserRole = "admin" | "manager" | "user";
 export type MatchMeetingStatus = "pending" | "accepted" | "rejected" | "completed" | "cancelled";
 
 /** Unit an admin enters annual income in. Storage is always absolute INR (see ProfessionDetails.annual_income). */
@@ -240,6 +240,22 @@ export interface AppUser {
   updated_at: string;
 }
 
+// ─── Manager Assignments ───────────────────────────────────────
+// Which profiles are assigned to which manager, for the "Assigned
+// Profiles" admin view. See migration 0011_manager_accounts.sql.
+
+export interface ManagerProfileAssignment {
+  id: string;
+  manager_id: string;
+  profile_id: string;
+  assigned_by: string;
+  assigned_at: string;
+  notes?: string;
+  // Relations (when joined)
+  profile?: Profile;
+  manager?: AppUser;
+}
+
 // ─── Subscription ─────────────────────────────────────────────
 
 export interface SubscriptionPlanConfig {
@@ -339,7 +355,7 @@ export interface AuditLog {
   actor_role: UserRole;
   actor_name: string;
   action: AuditAction;
-  entity_type: "profile" | "user" | "subscription" | "plan" | "setting" | "match_meeting";
+  entity_type: "profile" | "user" | "subscription" | "plan" | "setting" | "match_meeting" | "manager";
   entity_id: string;
   entity_name?: string;
   old_value?: Record<string, unknown>;
@@ -382,7 +398,13 @@ export type AuditAction =
   | "match_meeting_accepted"
   | "match_meeting_rejected"
   | "match_meeting_completed"
-  | "match_meeting_cancelled";
+  | "match_meeting_cancelled"
+  | "manager_created"
+  | "manager_activated"
+  | "manager_deactivated"
+  | "manager_deleted"
+  | "profile_assigned_to_manager"
+  | "profile_unassigned_from_manager";
 
 // ─── Notifications ─────────────────────────────────────────────
 
