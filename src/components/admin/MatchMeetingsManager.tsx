@@ -6,12 +6,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import {
   CalendarHeart, Clock, CheckCircle2, XCircle, Ban, Check, X,
-  Loader2, Calendar, MapPin, Users2,
+  Loader2, Calendar, MapPin, Users2, PlusCircle, PencilLine, ChevronDown,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatDate, cn } from "@/lib/utils";
 import { logAuditAction, notifyProfileOwner } from "@/lib/audit";
 import { VerifiedBadge } from "@/components/shared/VerifiedBadge";
+import { LogMatchMeetingModal } from "@/components/admin/LogMatchMeetingModal";
 import { MatchMeetingStatus } from "@/types";
 
 const TABS: { key: "all" | MatchMeetingStatus; label: string }[] = [
@@ -59,6 +60,8 @@ export function MatchMeetingsManager({
   const [rejectReason, setRejectReason] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [logModalOpen, setLogModalOpen] = useState(false);
+  const [completedMatchesOpen, setCompletedMatchesOpen] = useState(false);
 
   const scopedRequests =
     scope === "assigned" && assignedProfileIds
@@ -70,9 +73,19 @@ export function MatchMeetingsManager({
 
   const filtered = activeTab === "all" ? scopedRequests : scopedRequests.filter((r) => r.status === activeTab);
 
+  // Side A can now be either a linked `users` row (member requested it, or
+  // a manual entry with a member on side A) or a `requested_by_profile`
+  // row (manual entry with a profile on side A). Fall back gracefully
+  // across whichever shape the row actually has.
   const getPersonName = (r: Record<string, unknown>) => {
     const requester = r.users as Record<string, unknown> | null;
-    return String(requester?.full_name || requester?.email || "Member");
+    if (requester) return String(requester.full_name || requester.email || "Member");
+    const requesterProfile = r.requested_by_profile as Record<string, unknown> | null;
+    if (requesterProfile) {
+      const personal = requesterProfile.personal as Record<string, string> | null;
+      return [personal?.first_name, personal?.last_name].filter(Boolean).join(" ") || "—";
+    }
+    return "—";
   };
   const getProfileName = (r: Record<string, unknown>) => {
     const profile = r.profiles as Record<string, unknown> | null;
@@ -234,28 +247,69 @@ export function MatchMeetingsManager({
         </div>
       </div>
 
-      {/* Completed matches directory */}
+      {/* Manual log action */}
+      <div className="flex justify-end">
+        <motion.button
+          whileTap={{ scale: 0.98 }}
+          onClick={() => setLogModalOpen(true)}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-navy-dark text-white hover:bg-gold hover:text-navy-dark text-xs font-semibold uppercase tracking-wider shadow-md transition-all"
+        >
+          <PlusCircle className="w-4 h-4" />
+          Log Match Meeting
+        </motion.button>
+      </div>
+
+      <LogMatchMeetingModal
+        isOpen={logModalOpen}
+        onClose={() => setLogModalOpen(false)}
+        currentUserRole={currentUserRole}
+        assignedProfileIds={assignedProfileIds}
+        onLogged={() => router.refresh()}
+      />
+
+      {/* Completed matches directory — click the header to reveal who met whom */}
       {totalCompleted > 0 && (
         <div className="luxury-card overflow-hidden">
-          <div className="p-5 border-b border-gray-100 flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => setCompletedMatchesOpen((v) => !v)}
+            aria-expanded={completedMatchesOpen}
+            className="w-full p-5 border-b border-gray-100 flex items-center gap-2.5 text-left hover:bg-gray-50/60 transition-colors"
+          >
             <div className="p-2 rounded-xl bg-gold/15 text-gold-dark">
               <Users2 className="w-5 h-5" />
             </div>
-            <div>
+            <div className="flex-1">
               <h3 className="font-serif font-bold text-navy-dark text-lg">Completed Matches</h3>
-              <p className="text-xs text-gray-400">Members and profiles with a completed match meeting</p>
+              <p className="text-xs text-gray-400">Click to {completedMatchesOpen ? "hide" : "view"} who met whom ({totalCompleted})</p>
             </div>
-          </div>
+            <ChevronDown className={cn("w-4 h-4 text-gray-400 transition-transform flex-shrink-0", completedMatchesOpen && "rotate-180")} />
+          </button>
+          {completedMatchesOpen && (
           <div className="divide-y divide-gray-50">
+            {requests.filter((r) => r.status === "completed").length === 0 && (
+              <p className="px-5 py-6 text-center text-xs text-gray-400">
+                No completed match details could be loaded. Check the server console for a data error.
+              </p>
+            )}
             {requests.filter((r) => r.status === "completed").map((r) => (
               <div key={String(r.id)} className="px-5 py-3 flex flex-wrap items-center gap-2 sm:gap-3 text-sm">
                 <span className="font-medium text-navy-dark">{getPersonName(r)}</span>
                 <span className="text-gray-400 text-xs">met</span>
                 <span className="font-medium text-navy-dark flex-1 min-w-[100px]">{getProfileName(r)}</span>
+                {Boolean(r.is_manual) && (
+                  <span
+                    className="inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-600 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded-full"
+                    title="Manually logged by staff"
+                  >
+                    <PencilLine className="w-2.5 h-2.5" /> Manual
+                  </span>
+                )}
                 <span className="text-xs text-gray-400 w-full sm:w-auto">{formatDate(String(r.completed_at || r.updated_at))}</span>
               </div>
             ))}
           </div>
+          )}
         </div>
       )}
 

@@ -9,13 +9,30 @@ export default async function AdminMatchMeetingsPage() {
   const { data: { user } } = await supabase.auth.getUser();
   const { data: me } = await supabase.from("users").select("role").eq("id", user!.id).single();
 
-  const [{ data: requests }, { data: stats }] = await Promise.all([
+  // NOTE: match_meeting_requests now has TWO foreign keys pointing at
+  // `profiles` (profile_id, and requested_by_profile_id). Once a table has
+  // more than one FK to the same target, PostgREST needs an explicit FK
+  // hint on every embed to that table or it can silently fail to resolve
+  // the ambiguous relationship. Both joins below are hinted accordingly —
+  // do not simplify either back to a bare `profiles(...)`.
+  const [{ data: requests, error: requestsError }, { data: stats }] = await Promise.all([
     supabase
       .from("match_meeting_requests")
-      .select("*, profiles(id, profile_id, personal, images, is_verified), users!requested_by_user_id(id, full_name, email)")
+      .select(
+        `*,
+         profiles!match_meeting_requests_profile_id_fkey(id, profile_id, personal, images, is_verified),
+         users!requested_by_user_id(id, full_name, email),
+         requested_by_profile:profiles!match_meeting_requests_requested_by_profile_id_fkey(id, profile_id, personal, images)`
+      )
       .order("created_at", { ascending: false }),
     supabase.from("dashboard_stats").select("pending_match_meetings, total_completed_match_meetings").single(),
   ]);
+
+  if (requestsError) {
+    // Surface this in the server terminal — a silent empty list here is
+    // exactly what causes "stats say 2 completed, but list shows nothing".
+    console.error("[match-meetings] failed to load requests:", requestsError);
+  }
 
   let assignedProfileIds: string[] | undefined;
   if (me?.role === "manager") {
