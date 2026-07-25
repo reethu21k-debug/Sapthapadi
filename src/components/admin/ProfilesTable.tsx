@@ -6,7 +6,7 @@ import {
   flexRender,
   ColumnDef,
 } from "@tanstack/react-table";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -100,6 +100,11 @@ export function ProfilesTable({
   managers = [],
 }: Props) {
   const router = useRouter();
+  // Needed so pagination links can preserve whatever filters are currently
+  // active in the URL (gender, status, religion, search, etc.) — without
+  // this, clicking a page link replaces the entire query string with just
+  // `?page=N` and the active filters are silently dropped.
+  const searchParams = useSearchParams();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
@@ -108,6 +113,17 @@ export function ProfilesTable({
   const [assigningTarget, setAssigningTarget] = useState<AssignTarget | null>(null);
   const [assigningManagersProfile, setAssigningManagersProfile] = useState<Profile | null>(null);
   const MENU_WIDTH = 192; // matches w-48
+
+  // Builds a pagination href that keeps every currently active filter param
+  // intact and only changes `page`. This is what ProfileFiltersBar.tsx
+  // already does for its own filter changes (it starts from
+  // `new URLSearchParams(searchParams.toString())`) — pagination needs the
+  // same treatment so switching pages doesn't reset the filters.
+  const buildPageHref = (targetPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", String(targetPage));
+    return `?${params.toString()}`;
+  };
 
   // ─── Photo lightbox ───────────────────────────────────────────
   // Double-clicking a row's avatar thumbnail opens the profile photo at
@@ -1046,7 +1062,7 @@ export function ProfilesTable({
 
           <div className="flex items-center gap-1.5">
             <a
-              href={`?page=${page - 1}`}
+              href={buildPageHref(page - 1)}
               aria-disabled={page <= 1}
               className={cn(
                 "p-2 rounded-xl border text-xs font-semibold transition-all flex items-center justify-center",
@@ -1064,7 +1080,7 @@ export function ProfilesTable({
               return (
                 <a
                   key={pageNum}
-                  href={`?page=${pageNum}`}
+                  href={buildPageHref(pageNum)}
                   className={cn(
                     "w-8 h-8 rounded-xl text-xs font-semibold flex items-center justify-center transition-all shadow-2xs",
                     isCurrent
@@ -1078,7 +1094,7 @@ export function ProfilesTable({
             })}
 
             <a
-              href={`?page=${page + 1}`}
+              href={buildPageHref(page + 1)}
               aria-disabled={page >= totalPages}
               className={cn(
                 "p-2 rounded-xl border text-xs font-semibold transition-all flex items-center justify-center",

@@ -1628,8 +1628,8 @@ h1, h2, h3, h4{
 .h-px{
   height: 1px;
 }
-.max-h-44{
-  max-height: 11rem;
+.max-h-40{
+  max-height: 10rem;
 }
 .max-h-48{
   max-height: 12rem;
@@ -1648,6 +1648,9 @@ h1, h2, h3, h4{
 }
 .max-h-\[94vh\]{
   max-height: 94vh;
+}
+.max-h-\[95vh\]{
+  max-height: 95vh;
 }
 .max-h-\[calc\(100vh-60px\)\]{
   max-height: calc(100vh - 60px);
@@ -2115,6 +2118,9 @@ h1, h2, h3, h4{
 }
 .flex-col{
   flex-direction: column;
+}
+.flex-col-reverse{
+  flex-direction: column-reverse;
 }
 .flex-wrap{
   flex-wrap: wrap;
@@ -6340,12 +6346,20 @@ h1, h2, h3, h4{
     height: 20rem;
   }
 
+  .sm\:max-h-44{
+    max-height: 11rem;
+  }
+
   .sm\:max-h-\[80vh\]{
     max-height: 80vh;
   }
 
   .sm\:max-h-\[85vh\]{
     max-height: 85vh;
+  }
+
+  .sm\:max-h-\[90vh\]{
+    max-height: 90vh;
   }
 
   .sm\:w-10{
@@ -6429,6 +6443,10 @@ h1, h2, h3, h4{
     max-width: 24rem;
   }
 
+  .sm\:flex-1{
+    flex: 1 1 0%;
+  }
+
   .sm\:flex-initial{
     flex: 0 1 auto;
   }
@@ -6451,6 +6469,10 @@ h1, h2, h3, h4{
 
   .sm\:flex-row{
     flex-direction: row;
+  }
+
+  .sm\:flex-nowrap{
+    flex-wrap: nowrap;
   }
 
   .sm\:items-center{
@@ -6491,6 +6513,12 @@ h1, h2, h3, h4{
 
   .sm\:gap-y-16{
     row-gap: 4rem;
+  }
+
+  .sm\:space-y-4 > :not([hidden]) ~ :not([hidden]){
+    --tw-space-y-reverse: 0;
+    margin-top: calc(1rem * calc(1 - var(--tw-space-y-reverse)));
+    margin-bottom: calc(1rem * var(--tw-space-y-reverse));
   }
 
   .sm\:space-y-6 > :not([hidden]) ~ :not([hidden]){
@@ -6599,6 +6627,11 @@ h1, h2, h3, h4{
     padding-right: 0.75rem;
   }
 
+  .sm\:px-3\.5{
+    padding-left: 0.875rem;
+    padding-right: 0.875rem;
+  }
+
   .sm\:px-4{
     padding-left: 1rem;
     padding-right: 1rem;
@@ -6609,9 +6642,19 @@ h1, h2, h3, h4{
     padding-right: 1.5rem;
   }
 
+  .sm\:py-1\.5{
+    padding-top: 0.375rem;
+    padding-bottom: 0.375rem;
+  }
+
   .sm\:py-10{
     padding-top: 2.5rem;
     padding-bottom: 2.5rem;
+  }
+
+  .sm\:py-2{
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
   }
 
   .sm\:py-2\.5{

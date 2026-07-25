@@ -1,8 +1,8 @@
-// File: D:\Stryvenix\Clients\Client-3 Saptapadi\Saptapadi Full Project\src\app\admin\match-meetings\page.tsx
-import * as entry from '../../../../../src/app/admin/match-meetings/page.js'
+// File: D:\Stryvenix\Clients\Client-3 Saptapadi\Saptapadi Full Project\src\app\admin\profiles\page.tsx
+import * as entry from '../../../../../src/app/admin/profiles/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
-type TEntry = typeof import('../../../../../src/app/admin/match-meetings/page.js')
+type TEntry = typeof import('../../../../../src/app/admin/profiles/page.js')
 
 type SegmentParams<T extends Object = any> = T extends Record<string, any>
   ? { [K in keyof T]: T[K] extends string ? string | string[] | undefined : never }
