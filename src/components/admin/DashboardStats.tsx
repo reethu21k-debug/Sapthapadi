@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   Users, UserCheck, UserX, CreditCard, Gift,
   AlertTriangle, Clock, FileText, UserPlus, TrendingUp, BadgeCheck, CalendarHeart,
+  ArrowRight,
 } from "lucide-react";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import { DashboardStats as Stats } from "@/types";
@@ -30,6 +32,7 @@ const STAT_CARDS = (s: Stats) => [
     color: "text-indigo-600",
     bg: "bg-indigo-50/80",
     border: "border-indigo-100/80",
+    href: "/admin/profiles/gallery?gender=male",
   },
   {
     label: "Female Profiles",
@@ -38,6 +41,7 @@ const STAT_CARDS = (s: Stats) => [
     color: "text-pink-600",
     bg: "bg-pink-50/80",
     border: "border-pink-100/80",
+    href: "/admin/profiles/gallery?gender=female",
   },
   {
     label: "Paid Members",
@@ -129,24 +133,24 @@ const STAT_CARDS = (s: Stats) => [
 ];
 
 export function DashboardStats({ stats }: Props) {
-  // Skeleton Loading State preventing layout shift
+  // Skeleton Loading State aligned to the new responsive grid
   if (!stats) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4">
         {Array.from({ length: 13 }).map((_, i) => (
           <div 
             key={i} 
-            className={`p-5 rounded-2xl bg-white border border-gray-100 shadow-2xs space-y-3 shimmer ${
-              i === 12 ? "col-span-2 sm:col-span-3 md:col-span-2" : ""
+            className={`p-5 rounded-2xl bg-white border border-gray-100 shadow-2xs space-y-4 animate-pulse ${
+              i === 12 ? "col-span-1 sm:col-span-2 xl:col-span-2 2xl:col-span-3" : "col-span-1"
             }`}
           >
             <div className="flex justify-between items-center">
-              <div className="w-10 h-10 rounded-xl bg-gray-100 animate-pulse" />
-              <div className="w-12 h-5 rounded-full bg-gray-100 animate-pulse" />
+              <div className="w-11 h-11 rounded-xl bg-gray-100" />
+              <div className="w-12 h-5 rounded-full bg-gray-100" />
             </div>
-            <div className="space-y-1 pt-1">
-              <div className="w-20 h-7 rounded bg-gray-100 animate-pulse" />
-              <div className="w-16 h-3 rounded bg-gray-100 animate-pulse" />
+            <div className="space-y-1.5 pt-2">
+              <div className="w-24 h-7 rounded-md bg-gray-100" />
+              <div className="w-16 h-3.5 rounded-md bg-gray-100" />
             </div>
           </div>
         ))}
@@ -157,54 +161,80 @@ export function DashboardStats({ stats }: Props) {
   const cards = STAT_CARDS(stats);
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-      {cards.map((card, i) => (
-        <motion.div
-          key={card.label}
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, delay: i * 0.04, ease: "easeOut" }}
-          whileHover={{ y: -3, transition: { duration: 0.15 } }}
-          className={`stat-card relative p-5 bg-white rounded-2xl border shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col justify-between group ${
-            card.border
-          } ${
-            card.wide 
-              ? "col-span-2 sm:col-span-3 md:col-span-2 bg-gradient-to-br from-white via-white to-gold/5" 
-              : "col-span-1"
-          }`}
-        >
-          {/* Top Row: Icon & Badge */}
-          <div className="flex items-start justify-between gap-2 mb-3">
-            <div 
-              className={`w-10 h-10 rounded-xl ${card.bg} border ${card.border} flex items-center justify-center flex-shrink-0 shadow-2xs group-hover:scale-105 transition-transform duration-200`}
-            >
-              <card.icon className={`w-5 h-5 ${card.color}`} />
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4">
+      {cards.map((card, i) => {
+        // Responsive spanning: Revenue spans 2 columns on most desktops, 3 on ultra-wide screens
+        const spanClass = card.wide
+          ? "col-span-1 sm:col-span-2 xl:col-span-2 2xl:col-span-3"
+          : "col-span-1";
+
+        const cardBody = (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, delay: i * 0.03, ease: "easeOut" }}
+            whileHover={{ y: -3, transition: { duration: 0.15 } }}
+            className={`stat-card relative h-full p-5 bg-white rounded-2xl border shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col justify-between group overflow-hidden ${
+              card.border
+            } ${
+              card.wide ? "bg-gradient-to-br from-white via-white to-amber-50/30 border-amber-200/60" : ""
+            } ${card.href ? "cursor-pointer" : ""}`}
+          >
+            {/* Top Row: Icon & Status Badge */}
+            <div className="flex items-start justify-between gap-3 mb-4">
+              <div
+                className={`w-11 h-11 rounded-xl ${card.bg} border ${card.border} flex items-center justify-center flex-shrink-0 shadow-2xs group-hover:scale-105 transition-transform duration-200`}
+              >
+                <card.icon className={`w-5 h-5 ${card.color}`} />
+              </div>
+
+              {card.change && (
+                <span
+                  className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border shadow-2xs flex items-center gap-0.5 ${
+                    card.up
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-200/60"
+                      : card.change === "Today"
+                      ? "bg-teal-50 text-teal-700 border-teal-200/60"
+                      : "bg-rose-50 text-rose-700 border-rose-200/60"
+                  }`}
+                >
+                  {card.change}
+                </span>
+              )}
             </div>
 
-            {card.change && (
-              <span
-                className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border shadow-2xs flex items-center gap-0.5 ${
-                  card.up 
-                    ? "bg-emerald-50 text-emerald-700 border-emerald-200/60" 
-                    : "bg-rose-50 text-rose-700 border-rose-200/60"
-                }`}
-              >
-                {card.change}
-              </span>
-            )}
-          </div>
+            {/* Bottom Row: Clean Sans-Serif Metrics & Label */}
+            <div className="mt-auto space-y-1">
+              <p className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight font-sans leading-none">
+                {card.value}
+              </p>
+              
+              <div className="flex items-center justify-between pt-1">
+                <p className="text-slate-500 font-medium text-xs truncate">
+                  {card.label}
+                </p>
+                
+                {card.href && (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 opacity-80 group-hover:opacity-100 transition-opacity">
+                    <span>Tap to view</span>
+                    <ArrowRight className="w-3 h-3 transition-transform duration-200 group-hover:translate-x-0.5" />
+                  </span>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        );
 
-          {/* Bottom Row: Metrics & Label */}
-          <div>
-            <p className="text-2xl lg:text-3xl font-bold text-navy-dark font-serif tracking-tight leading-none">
-              {card.value}
-            </p>
-            <p className="text-gray-500 font-medium text-xs mt-1.5 truncate">
-              {card.label}
-            </p>
+        return card.href ? (
+          <Link key={card.label} href={card.href} className={`block h-full ${spanClass}`}>
+            {cardBody}
+          </Link>
+        ) : (
+          <div key={card.label} className={`block h-full ${spanClass}`}>
+            {cardBody}
           </div>
-        </motion.div>
-      ))}
+        );
+      })}
     </div>
   );
 }
