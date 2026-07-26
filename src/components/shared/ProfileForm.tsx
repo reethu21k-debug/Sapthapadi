@@ -611,24 +611,6 @@ function PersonalSection({ data, onChange, isCheckingDuplicate }: { data: Record
           <HeightInput value={data.height_cm as number} onChange={(cm) => update("height_cm", cm)} />
         </div>
         <div>
-          <label className={labelClass}>Weight (kg)</label>
-          <input className={inputClass} type="number" value={(data.weight_kg as number) || ""} onChange={(e) => update("weight_kg", Number(e.target.value))} placeholder="60" />
-        </div>
-        <div>
-          <label className={labelClass}>Blood Group</label>
-          <select className={inputClass} value={(data.blood_group as string) || ""} onChange={(e) => update("blood_group", e.target.value)}>
-            <option value="">Select</option>
-            {["A+","A-","B+","B-","AB+","AB-","O+","O-"].map((bg) => <option key={bg} value={bg}>{bg}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className={labelClass}>Complexion</label>
-          <select className={inputClass} value={(data.complexion as string) || ""} onChange={(e) => update("complexion", e.target.value)}>
-            <option value="">Select</option>
-            {["Fair","Very Fair","Wheatish","Wheatish Medium","Dark"].map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-        </div>
-        <div>
           <label className={labelClass}>Religion *</label>
           <input className={inputClass} value={(data.religion as string) || ""} onChange={(e) => update("religion", e.target.value)} placeholder="Hindu" />
         </div>
@@ -653,16 +635,6 @@ function PersonalSection({ data, onChange, isCheckingDuplicate }: { data: Record
           <input className={inputClass} value={(data.rashi as string) || ""} onChange={(e) => update("rashi", e.target.value)} placeholder="Vrishabha" />
         </div>
         <div>
-          <label className={labelClass}>Manglik</label>
-          <select className={inputClass} value={(data.manglik as string) || ""} onChange={(e) => update("manglik", e.target.value)}>
-            <option value="">Select</option>
-            <option value="yes">Yes</option>
-            <option value="no">No</option>
-            <option value="anshik">Anshik (Partial)</option>
-            <option value="dont_know">Don&apos;t Know</option>
-          </select>
-        </div>
-        <div>
           <label className={labelClass}>Languages Known</label>
           <input className={inputClass} value={((data.languages_known as string[]) || []).join(", ")} onChange={(e) => update("languages_known", e.target.value.split(",").map(s => s.trim()).filter(Boolean))} placeholder="Telugu, English, Hindi" />
         </div>
@@ -680,22 +652,8 @@ function PersonalSection({ data, onChange, isCheckingDuplicate }: { data: Record
           <input className={inputClass} type="number" min={0} value={(data.children as number) || ""} onChange={(e) => update("children", Number(e.target.value))} placeholder="0" />
         </div>
         <div>
-          <label className={labelClass}>Food Preference</label>
-          <select className={inputClass} value={(data.food_preference as string) || ""} onChange={(e) => update("food_preference", e.target.value)}>
-            <option value="">Select</option>
-            <option value="vegetarian">Vegetarian</option>
-            <option value="non_vegetarian">Non-Vegetarian</option>
-            <option value="vegan">Vegan</option>
-            <option value="eggetarian">Eggetarian</option>
-          </select>
-        </div>
-        <div>
           <label className={labelClass}>Disability</label>
           <input className={inputClass} value={(data.disability as string) || ""} onChange={(e) => update("disability", e.target.value)} placeholder="None" />
-        </div>
-        <div className="md:col-span-2">
-          <label className={labelClass}>Habits</label>
-          <textarea className={inputClass} rows={2} value={(data.habits as string) || ""} onChange={(e) => update("habits", e.target.value)} placeholder="e.g. Non-smoker, occasional drinker, vegetarian diet..." />
         </div>
         <div>
           <label className={labelClass}>Nationality</label>

@@ -503,17 +503,11 @@ export function ProfileDetailView({ profile, subscription, accessList, auditLogs
                 <InfoRow label="Time of Birth" value={formatTimeOfBirth(p?.time_of_birth)} />
                 <InfoRow label="Age" value={p?.date_of_birth ? `${calculateAge(p.date_of_birth)} Years` : "—"} />
                 <InfoRow label="Height" value={p?.height_cm ? formatHeight(p.height_cm) : "—"} />
-                <InfoRow label="Weight" value={p?.weight_kg ? `${p.weight_kg} kg` : "—"} />
-                <InfoRow label="Blood Group" value={p?.blood_group || "—"} />
-                <InfoRow label="Complexion" value={p?.complexion || "—"} />
                 <InfoRow label="Gothram" value={p?.gothram || "—"} />
                 <InfoRow label="Nakshatram" value={p?.nakshatram || "—"} />
                 <InfoRow label="Rashi" value={p?.rashi || "—"} />
-                <InfoRow label="Manglik Status" value={p?.manglik ? titleCase(p.manglik) : "—"} />
                 <InfoRow label="Spoken Languages" value={(p?.languages_known || []).join(", ") || "—"} />
                 <InfoRow label="Marital Status" value={p?.marital_status ? titleCase(p.marital_status.replace(/_/g, " ")) : "—"} />
-                <InfoRow label="Dietary Preference" value={p?.food_preference ? titleCase(p.food_preference.replace(/_/g, " ")) : "—"} />
-                <InfoRow label="Habits" value={p?.habits || "—"} />
               </InfoCard>
 
               <div className="space-y-6">

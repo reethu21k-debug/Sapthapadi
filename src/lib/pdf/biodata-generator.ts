@@ -395,9 +395,6 @@ export async function generateBiodataPDF(profile: Profile): Promise<Buffer> {
     ["Time of Birth", personal.time_of_birth ? formatTimeOfBirth(personal.time_of_birth) : "—"],
     ["Age", age !== null ? `${age} Years` : "—"],
     ["Height", personal.height_cm ? formatHeight(personal.height_cm) : "—"],
-    ["Weight", personal.weight_kg ? `${personal.weight_kg} kg` : "—"],
-    ["Blood Group", personal.blood_group ?? "—"],
-    ["Complexion", personal.complexion ?? "—"],
     ["Languages Known", (personal.languages_known ?? []).join(", ") || "—"],
     ["Marital Status", personal.marital_status?.replace("_", " ") ?? "—"],
     ["Religion", personal.religion ?? "—"],
@@ -406,9 +403,6 @@ export async function generateBiodataPDF(profile: Profile): Promise<Buffer> {
     ["Gothram", personal.gothram ?? "—"],
     ["Nakshatram (Star)", personal.nakshatram ?? "—"],
     ["Rashi", personal.rashi ?? "—"],
-    ["Manglik", personal.manglik?.replace("_", " ") ?? "—"],
-    ["Food Preference", personal.food_preference?.replace("_", " ") ?? "—"],
-    ["Habits", personal.habits ?? "—"],
     ["Nationality", personal.nationality ?? "Indian"],
   ];
   y = drawInfoTable(doc, personalData, y);

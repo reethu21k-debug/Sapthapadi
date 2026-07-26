@@ -6,9 +6,6 @@
 
 export type Gender = "male" | "female";
 export type MaritalStatus = "never_married" | "divorced" | "widowed";
-export type BloodGroup = "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-";
-export type Manglik = "yes" | "no" | "anshik" | "dont_know";
-export type FoodPreference = "vegetarian" | "non_vegetarian" | "vegan" | "eggetarian";
 export type EmploymentType = "salaried" | "self_employed" | "business" | "government" | "freelance" | "not_working";
 export type VisaStatus = "citizen" | "pr" | "work_permit" | "student" | "visit" | "na";
 export type ProfileStatus = "pending" | "approved" | "rejected" | "deactivated" | "suspended";
@@ -39,22 +36,16 @@ export interface PersonalDetails {
   time_of_birth?: string;
   age?: number; // computed
   height_cm: number;
-  weight_kg?: number;
-  blood_group?: BloodGroup;
-  complexion?: string;
   religion: string;
   caste: string;
   sub_caste?: string;
   gothram?: string;
   nakshatram?: string;
   rashi?: string;
-  manglik?: Manglik;
   languages_known: string[];
   marital_status: MaritalStatus;
   children?: number;
   disability?: string;
-  habits?: string; // free-text habits entry (replaces prior smoking/drinking booleans)
-  food_preference: FoodPreference;
   nationality: string;
 }
 

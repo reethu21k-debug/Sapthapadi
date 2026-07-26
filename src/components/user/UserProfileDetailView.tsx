@@ -373,14 +373,9 @@ export function UserProfileDetailView({
           <InfoRow label="Date of Birth" value={personal?.date_of_birth ? formatDate(String(personal.date_of_birth)) : "—"} />
           <InfoRow label="Place of Birth" value={String(personal?.place_of_birth || "—")} />
           <InfoRow label="Time of Birth" value={formatTimeOfBirth(personal?.time_of_birth as string | undefined)} />
-          <InfoRow label="Blood Group" value={String(personal?.blood_group || "—")} />
-          <InfoRow label="Complexion" value={String(personal?.complexion || "—")} />
           <InfoRow label="Nakshatram" value={String(personal?.nakshatram || "—")} />
           <InfoRow label="Rashi" value={String(personal?.rashi || "—")} />
-          <InfoRow label="Manglik" value={personal?.manglik ? titleCase(String(personal.manglik)) : "—"} />
           <InfoRow label="Languages" value={((personal?.languages_known as string[]) || []).join(", ") || "—"} />
-          <InfoRow label="Food Preference" value={personal?.food_preference ? titleCase(String(personal.food_preference).replace(/_/g, " ")) : "—"} />
-          <InfoRow label="Habits" value={String(personal?.habits || "—")} />
           <InfoRow label="Nationality" value={String(personal?.nationality || "Indian")} />
           {/* Contact - only if visibility allows */}
           {visibility?.show_phone && contact?.phone && (
