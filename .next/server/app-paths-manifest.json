@@ -1,9 +1,1 @@
-{
-  "/api/profiles/check-duplicate/route": "app/api/profiles/check-duplicate/route.js",
-  "/admin/dashboard/page": "app/admin/dashboard/page.js",
-  "/admin/profiles/page": "app/admin/profiles/page.js",
-  "/admin/profiles/create/page": "app/admin/profiles/create/page.js",
-  "/admin/profiles/gallery/page": "app/admin/profiles/gallery/page.js",
-  "/admin/profiles/[id]/page": "app/admin/profiles/[id]/page.js",
-  "/admin/profiles/[id]/edit/page": "app/admin/profiles/[id]/edit/page.js"
-}
+{}

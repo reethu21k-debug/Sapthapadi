@@ -232,11 +232,11 @@ export default async function PlansPage() {
                 </Link>
 
                 <a
-                  href="tel:+9104088889999"
+                  href="tel:+91 9440733232"
                   className="w-full sm:w-auto lg:w-full px-6 py-3.5 rounded-full border border-white/20 hover:border-gold/60 text-white font-medium text-xs tracking-wide uppercase flex items-center justify-center gap-2 transition-colors duration-200"
                 >
                   <PhoneCall className="w-3.5 h-3.5 text-gold" />
-                  <span>Call +91 (040) 8888 9999</span>
+                  <span>Call +91 9440733232</span>
                 </a>
               </div>
             </div>

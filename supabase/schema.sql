@@ -378,7 +378,7 @@ CREATE TABLE public.site_settings (
 );
 
 INSERT INTO public.site_settings (site_name, site_tagline, contact_email, contact_phone) 
-VALUES ('Saptapadi', 'Where Souls Unite', 'contact@saptapadi.in', '+91 9999999999');
+VALUES ('Saptapadi', 'Where Souls Unite', 'contact@saptapadi.in', '+91 9440733232);
 
 -- ─── SUCCESS STORIES ───────────────────────────────────────────
 

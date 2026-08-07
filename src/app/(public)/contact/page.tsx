@@ -30,7 +30,7 @@ const QUICK_CONTACTS = [
   {
     icon: PhoneCall,
     title: "Dedicated Helpline",
-    value: "+91 (040) 8888 9999",
+    value: "+91 9440733232",
     sub: "Priority support for active members",
   },
   {

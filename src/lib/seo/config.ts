@@ -44,7 +44,7 @@ export const siteConfig = {
     addressCountry: "IN",
   },
   // TODO: confirm this is the correct public support number.
-  telephone: "+91-40-88889999",
+  telephone: "+91 9440733232",
   // TODO: replace with the real support inbox.
   email: "support@sapthapadiatp.com",
   founder: "Stryvenix",
