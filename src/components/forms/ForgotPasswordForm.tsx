@@ -24,7 +24,7 @@ export function ForgotPasswordForm() {
     try {
       const supabase = createClient();
       const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `${window.location.origin}/callback?next=/reset-password`,
       });
       if (error) throw error;
       setSent(true);
