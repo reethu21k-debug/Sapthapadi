@@ -48,31 +48,33 @@ export function ResetPasswordForm() {
     const code = searchParams.get("code");
 
     if (code) {
-      // PKCE flow — exchange the code for a session first
       supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
         if (error) {
-          setSessionError("Reset link is invalid or expired. Please request a new one.");
+          setSessionError(
+            "Reset link is invalid or expired. Please request a new one."
+          );
         } else {
           setSessionReady(true);
-          // Clean the code from the URL without reloading
           window.history.replaceState({}, "", "/reset-password");
         }
       });
       return;
     }
 
-    // No code in URL — listen for PASSWORD_RECOVERY event (legacy hash flow)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    // No code — listen for PASSWORD_RECOVERY event (token_hash flow via callback)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") setSessionReady(true);
     });
 
-    // Also handle already-active session (page refresh)
+    // Handle already-active session (page refresh)
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) setSessionReady(true);
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [searchParams]);
 
   const onSubmit = async (data: ResetPasswordData) => {
     if (!sessionReady) {
@@ -82,13 +84,17 @@ export function ResetPasswordForm() {
     setIsLoading(true);
     try {
       const supabase = createClient();
-      const { error } = await supabase.auth.updateUser({ password: data.password });
+      const { error } = await supabase.auth.updateUser({
+        password: data.password,
+      });
       if (error) throw error;
       setDone(true);
       toast.success("Password updated successfully!");
       setTimeout(() => router.push("/login"), 2500);
     } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : "Failed to update password");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update password"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -98,8 +104,12 @@ export function ResetPasswordForm() {
     return (
       <div className="text-center py-4">
         <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-4" />
-        <h3 className="text-white font-semibold text-lg mb-2">Password Updated!</h3>
-        <p className="text-white/60 text-sm">Redirecting you to the login page…</p>
+        <h3 className="text-white font-semibold text-lg mb-2">
+          Password Updated!
+        </h3>
+        <p className="text-white/60 text-sm">
+          Redirecting you to the login page…
+        </p>
       </div>
     );
   }
@@ -118,12 +128,21 @@ export function ResetPasswordForm() {
             placeholder="Minimum 8 characters"
             className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 pr-11 text-white placeholder:text-white/30 focus:outline-none focus:border-gold/60 focus:bg-white/15 transition-all"
           />
-          <button type="button" onClick={() => setShowPassword((v) => !v)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70">
-            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70"
+          >
+            {showPassword ? (
+              <EyeOff className="w-4 h-4" />
+            ) : (
+              <Eye className="w-4 h-4" />
+            )}
           </button>
         </div>
-        {errors.password && <p className="text-red-400 text-xs mt-1">{errors.password.message}</p>}
+        {errors.password && (
+          <p className="text-red-400 text-xs mt-1">{errors.password.message}</p>
+        )}
       </div>
 
       {/* Confirm password */}
@@ -138,12 +157,23 @@ export function ResetPasswordForm() {
             placeholder="Repeat your new password"
             className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 pr-11 text-white placeholder:text-white/30 focus:outline-none focus:border-gold/60 focus:bg-white/15 transition-all"
           />
-          <button type="button" onClick={() => setShowConfirm((v) => !v)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70">
-            {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          <button
+            type="button"
+            onClick={() => setShowConfirm((v) => !v)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70"
+          >
+            {showConfirm ? (
+              <EyeOff className="w-4 h-4" />
+            ) : (
+              <Eye className="w-4 h-4" />
+            )}
           </button>
         </div>
-        {errors.confirmPassword && <p className="text-red-400 text-xs mt-1">{errors.confirmPassword.message}</p>}
+        {errors.confirmPassword && (
+          <p className="text-red-400 text-xs mt-1">
+            {errors.confirmPassword.message}
+          </p>
+        )}
       </div>
 
       <p className="text-white/40 text-xs">
@@ -156,13 +186,14 @@ export function ResetPasswordForm() {
         className="w-full btn-gold justify-center py-3.5 disabled:opacity-60"
       >
         {isLoading ? (
-          <><Loader2 className="w-4 h-4 animate-spin" /> Updating…</>
+          <>
+            <Loader2 className="w-4 h-4 animate-spin" /> Updating…
+          </>
         ) : (
           "Set New Password"
         )}
       </button>
 
-      {/* Status messages */}
       {sessionError && (
         <p className="text-red-400 text-xs text-center">{sessionError}</p>
       )}
