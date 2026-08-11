@@ -43,11 +43,8 @@ export async function GET(request: NextRequest) {
   if (token_hash && type) {
     const { error } = await supabase.auth.verifyOtp({ token_hash, type });
     if (!error) {
-      return NextResponse.redirect(
-        type === 'recovery'
-          ? `${origin}/auth/update-password`
-          : `${origin}${next}`
-      );
+      // Always use the `next` param — don't hardcode any path
+      return NextResponse.redirect(`${origin}${next}`);
     }
   }
 
