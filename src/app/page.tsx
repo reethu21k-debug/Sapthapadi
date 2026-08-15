@@ -149,7 +149,7 @@ function TrustMetricsStrip() {
   return (
     <section className="relative z-10 bg-gradient-to-r from-[#1a080a] via-[#341014] to-[#1a080a] py-8 sm:py-10 border-y border-[#C9982D]/20 shadow-2xl">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#C9982D]/10 via-transparent to-transparent pointer-events-none" />
-      
+
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <dl className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 divide-y md:divide-y-0 md:divide-x divide-white/10 text-center">
           {metrics.map((m, idx) => (
@@ -174,15 +174,79 @@ function TrustMetricsStrip() {
 }
 
 // ─── Seven Vows Thread ─────────────────────────────────────────
+// Each card is a pre-designed image living at /public/Cards/Card{n}.png.
+// The photo, badge, and copy are all baked into the artwork.
+//
+// The actual card graphic inside each PNG canvas isn't cropped identically —
+// padding differs slightly per image — so each card gets its OWN aspect
+// ratio (derived from the true visible-card dimensions below) rather than
+// one shared ratio. Combined with object-contain, this guarantees every
+// card renders in full, correctly proportioned, with zero clipping.
 
 const VOWS = [
-  { mark: "१", sanskrit: "Isham", title: "Nourishment", note: "Providing health, abundance, and care for one another through every season." },
-  { mark: "२", sanskrit: "Urje", title: "Strength", note: "Growing unwavering mental, physical, and spiritual resolve together." },
-  { mark: "३", sanskrit: "Rayasposhaya", title: "Prosperity", note: "Stewardship of wealth, ethics, and shared aspirations for a legacy." },
-  { mark: "४", sanskrit: "Mayobhavaya", title: "Wisdom", note: "Nurturing deep mutual respect, peace, and harmony in daily life." },
-  { mark: "५", sanskrit: "Prajabhyah", title: "Progeny", note: "Raising compassionate, values-driven generations imbued with love." },
-  { mark: "६", sanskrit: "Ritubhyah", title: "Well-being", note: "Being each other's sanctuary through sickness, health, and aging." },
-  { mark: "७", sanskrit: "Sakhya", title: "Friendship", note: "An eternal partnership rooted in unshakeable trust and joy." },
+  {
+    mark: "१",
+    sanskrit: "Isham",
+    title: "Nourishment",
+    note: "Providing health, abundance, and care for one another through every season.",
+    image: "/Cards/Card1.png",
+    width: 1267,
+    height: 861,
+  },
+  {
+    mark: "२",
+    sanskrit: "Urje",
+    title: "Strength",
+    note: "Growing unwavering mental, physical, and spiritual resolve together.",
+    image: "/Cards/Card2.png",
+    width: 1270,
+    height: 861,
+  },
+  {
+    mark: "३",
+    sanskrit: "Rayasposhaya",
+    title: "Prosperity",
+    note: "Stewardship of wealth, ethics, and shared aspirations for a legacy.",
+    image: "/Cards/Card3.png",
+    width: 1281,
+    height: 881,
+  },
+  {
+    mark: "४",
+    sanskrit: "Mayobhavaya",
+    title: "Wisdom",
+    note: "Nurturing deep mutual respect, peace, and harmony in daily life.",
+    image: "/Cards/Card4.png",
+    width: 1275,
+    height: 894,
+  },
+  {
+    mark: "५",
+    sanskrit: "Prajabhyah",
+    title: "Progeny",
+    note: "Raising compassionate, values-driven generations imbued with love.",
+    image: "/Cards/Card5.png",
+    width: 1291,
+    height: 886,
+  },
+  {
+    mark: "६",
+    sanskrit: "Ritubhyah",
+    title: "Well-being",
+    note: "Being each other's sanctuary through sickness, health, and aging.",
+    image: "/Cards/Card6.png",
+    width: 1282,
+    height: 871,
+  },
+  {
+    mark: "७",
+    sanskrit: "Sakhya",
+    title: "Friendship",
+    note: "An eternal partnership rooted in unshakeable trust and joy.",
+    image: "/Cards/Card7.png",
+    width: 1345,
+    height: 975,
+  },
 ] as const;
 
 function SevenVowsSection() {
@@ -234,8 +298,8 @@ function SevenVowsSection() {
           </ScrollReveal>
         </header>
 
-        <div className="relative mt-12 sm:mt-20">
-          <ol className="flex flex-wrap justify-center gap-x-6 gap-y-14 sm:gap-y-16 m-0 p-0 relative z-10">
+        <div className="relative mt-4 sm:mt-8">
+          <ol className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 m-0 p-0 relative z-10 list-none">
             {VOWS.map((vow, i) => (
               <ScrollReveal
                 key={vow.mark}
@@ -243,24 +307,21 @@ function SevenVowsSection() {
                 variant="fade-up"
                 delay={i * 80}
                 duration={700}
-                className="group relative flex flex-col items-center text-center p-6 sm:p-8 pt-12 sm:pt-14 rounded-2xl sm:rounded-[2rem] bg-white/70 backdrop-blur-md shadow-[0_4px_20px_-4px_rgba(52,16,20,0.05)] border border-[#C9982D]/20 hover:border-[#C9982D]/50 hover:bg-white hover:shadow-[0_12px_40px_-8px_rgba(201,152,45,0.15)] transition-all duration-500 hover:-translate-y-2 list-none w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] xl:w-[calc(25%-18px)] max-w-sm"
+                className={`list-none ${i === 6 ? "sm:col-span-2 lg:col-span-1 sm:max-w-md sm:mx-auto lg:max-w-none" : ""}`}
               >
-                <div className="absolute -top-8 sm:-top-10 left-1/2 -translate-x-1/2 w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-b from-[#FDFBF7] to-white border border-[#C9982D]/30 shadow-lg flex items-center justify-center text-[#C9982D] font-serif text-2xl sm:text-3xl transition-all duration-500 group-hover:scale-110 group-hover:border-[#C9982D]/80 group-hover:bg-gradient-to-b group-hover:from-[#341014] group-hover:to-[#1a080a] group-hover:text-[#F7EFE1] z-10">
-                  {vow.mark}
-                </div>
-                
-                <div className="flex flex-col items-center w-full">
-                  <span className="text-[#C8631C] text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] mb-3">
-                    Step {i + 1} <span className="mx-1.5 opacity-40">•</span> {vow.sanskrit}
-                  </span>
-                  <h3 className="text-[#341014] font-serif font-bold text-lg sm:text-xl tracking-wide mb-3 transition-colors duration-300 group-hover:text-[#C8631C]">
-                    {vow.title}
-                  </h3>
-                  <div className="w-10 h-px bg-[#C9982D]/30 mb-4 transition-all duration-300 group-hover:w-16 group-hover:bg-[#C9982D]" />
-                  <p className="text-gray-600 text-xs sm:text-sm font-light leading-relaxed">
-                    {vow.note}
-                  </p>
-                </div>
+                <figure
+                  className="group relative m-0 w-full rounded-2xl sm:rounded-[1.75rem] overflow-hidden shadow-[0_4px_20px_-4px_rgba(52,16,20,0.08)] border border-[#C9982D]/20 hover:border-[#C9982D]/50 hover:shadow-[0_16px_44px_-10px_rgba(201,152,45,0.22)] transition-all duration-500 hover:-translate-y-1.5 bg-[#FDFBF7]"
+                  style={{ aspectRatio: `${vow.width} / ${vow.height}` }}
+                >
+                  <Image
+                    src={vow.image}
+                    alt={`Step ${i + 1} · ${vow.sanskrit} — ${vow.title}: ${vow.note}`}
+                    fill
+                    sizes="(max-width: 640px) 92vw, (max-width: 1024px) 46vw, 30vw"
+                    className="object-contain transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+                    priority={i === 0}
+                  />
+                </figure>
               </ScrollReveal>
             ))}
           </ol>
@@ -276,7 +337,7 @@ function LoveStorySection() {
   return (
     <section className="relative bg-[#341014] py-20 sm:py-28 md:py-36 overflow-hidden text-center">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-[80%] max-w-5xl bg-[#C9982D]/10 blur-[150px] pointer-events-none rounded-full" />
-      
+
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <header className="max-w-2xl mx-auto mb-16 sm:mb-20">
           <ScrollReveal variant="fade-up">
