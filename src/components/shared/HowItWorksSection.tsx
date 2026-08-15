@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useId } from "react";
+import Image from "next/image";
 import {
   motion,
   useReducedMotion,
@@ -10,44 +11,50 @@ import {
   useSpring,
   useMotionTemplate,
 } from "framer-motion";
-import { UserPlus, Search, Heart, FileText, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 const MARIGOLD = "#E8871E";
 const SINDOOR = "#A6193C";
 
+/**
+ * Each step now points at a pre-designed card image (public/Process/CardN.png)
+ * instead of being built from an icon + heading + paragraph. `imageWidth` /
+ * `imageHeight` are the image's real intrinsic dimensions — used to lock the
+ * card's aspect ratio so next/image can render responsively (fill + object-cover)
+ * with zero cropping and zero layout shift while loading.
+ */
 const STEPS = [
   {
-    icon: UserPlus,
     step: "01",
     title: "Register & Profile",
-    description:
-      "Begin your journey by creating a comprehensive profile. Share your values, family background, and aspirations to help us understand what you seek in a life partner.",
     accent: "marigold" as const,
+    image: "/Process/Card1.png",
+    imageWidth: 1329,
+    imageHeight: 942,
   },
   {
-    icon: Search,
     step: "02",
     title: "Curated Matches",
-    description:
-      "Our matchmakers meticulously handpick profiles that align with your deepest preferences. Experience a refined search with zero spam and absolute privacy.",
     accent: "sindoor" as const,
+    image: "/Process/Card2.png",
+    imageWidth: 1346,
+    imageHeight: 968,
   },
   {
-    icon: Heart,
     step: "03",
     title: "Connect & Meet",
-    description:
-      "Express interest in the profiles that resonate with you. We facilitate respectful introductions, allowing families to connect organically and meaningfully.",
     accent: "marigold" as const,
+    image: "/Process/Card3.png",
+    imageWidth: 1347,
+    imageHeight: 1016,
   },
   {
-    icon: FileText,
     step: "04",
     title: "Premium Biodata",
-    description:
-      "Generate a stunning, elegantly designed biodata PDF. Easily share your details with families through a modern layout complete with a secure QR code.",
     accent: "sindoor" as const,
+    image: "/Process/Card4.png",
+    imageWidth: 1339,
+    imageHeight: 985,
   },
 ];
 
@@ -125,10 +132,18 @@ function MagneticButton({ children, href }: { children: React.ReactNode; href: s
         <span className="relative z-10 transition-colors duration-300 group-hover:text-[#1a2540] group-focus-visible:text-[#1a2540]">
           {children}
         </span>
-        <ArrowRight
+        <svg
           className="w-5 h-5 relative z-10 group-hover:translate-x-1 group-hover:text-[#1a2540] group-focus-visible:text-[#1a2540] transition-transform duration-300"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
           aria-hidden="true"
-        />
+        >
+          <path d="M5 12h14M13 6l6 6-6 6" />
+        </svg>
       </Link>
     </motion.div>
   );
@@ -137,7 +152,7 @@ function MagneticButton({ children, href }: { children: React.ReactNode; href: s
 /* =========================================================================
    CEREMONIAL COMPONENTS (SVG DRAWING & BLOOMING)
    All decorative — marked aria-hidden so screen readers don't announce
-   four unlabelled <svg> elements before ever reaching the step content.
+   unlabelled <svg> elements before ever reaching the step content.
    ========================================================================= */
 
 function MarigoldNode({ number, accent }: { number: string; accent: "marigold" | "sindoor" }) {
@@ -297,57 +312,28 @@ function DiyaIcon({ lit }: { lit: boolean }) {
 }
 
 /* =========================================================================
-   WAX-SEAL STEP CARD WITH DYNAMIC SHEEN
+   IMAGE STEP CARD
+   - Renders the pre-designed CardN.png as the entire card face.
+   - The wrapper's aspect-ratio is locked to the image's real intrinsic
+     dimensions so next/image (fill + object-cover) never crops or
+     letterboxes, and never shifts layout while loading.
+   - Keeps the same tilt / sheen hover polish as the original text cards.
    ========================================================================= */
 
-function SealMedallion({ icon: Icon, accentColor }: { icon: React.ElementType; accentColor: string }) {
-  const gradId = useId();
-  const scallops = Array.from({ length: 16 });
-
-  return (
-    <div className="relative w-20 h-20 flex items-center justify-center" aria-hidden="true">
-      <div className="absolute inset-0 bg-black/10 rounded-full blur-md translate-y-2" />
-      <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full z-10">
-        <defs>
-          <linearGradient id={gradId} x1="20%" y1="0%" x2="80%" y2="100%">
-            <stop offset="0%" stopColor={accentColor} />
-            <stop offset="50%" stopColor={accentColor} />
-            <stop offset="100%" stopColor="#6b0015" />
-          </linearGradient>
-        </defs>
-        {scallops.map((_, i) => (
-          <circle
-            key={i}
-            cx="50"
-            cy="4"
-            r="8.5"
-            fill={`url(#${gradId})`}
-            transform={`rotate(${i * (360 / 16)} 50 50)`}
-          />
-        ))}
-        <circle cx="50" cy="50" r="38" fill={`url(#${gradId})`} />
-        <path d="M 15 50 A 35 35 0 0 1 85 50 Q 80 30 50 20 Q 20 30 15 50" fill="white" opacity="0.15" />
-        <circle cx="50" cy="50" r="28" fill="none" stroke="white" strokeWidth="1" opacity="0.4" />
-        <circle cx="50" cy="50" r="24" fill="none" stroke="white" strokeWidth="1" strokeDasharray="3 4" opacity="0.3" />
-      </svg>
-      <Icon className="relative z-20 w-7 h-7 text-white drop-shadow-md" strokeWidth={1.5} />
-    </div>
-  );
-}
-
-function StepCard({ step, isEven }: { step: (typeof STEPS)[number]; isEven: boolean }) {
+function StepCard({ step }: { step: (typeof STEPS)[number] }) {
   const accentColor = step.accent === "marigold" ? MARIGOLD : SINDOOR;
   const cardRef = useRef<HTMLDivElement>(null);
   const reduceMotion = useSafeReducedMotion();
+  const gradId = useId();
 
   const mouseX = useMotionValue(0.5);
   const mouseY = useMotionValue(0.5);
-  const tiltX = useSpring(useTransform(mouseY, [0, 1], [6, -6]), { stiffness: 400, damping: 30 });
-  const tiltY = useSpring(useTransform(mouseX, [0, 1], [-6, 6]), { stiffness: 400, damping: 30 });
+  const tiltX = useSpring(useTransform(mouseY, [0, 1], [5, -5]), { stiffness: 400, damping: 30 });
+  const tiltY = useSpring(useTransform(mouseX, [0, 1], [-5, 5]), { stiffness: 400, damping: 30 });
 
   const sheenGradient = useMotionTemplate`radial-gradient(
     circle at ${useTransform(mouseX, [0, 1], [0, 100])}% ${useTransform(mouseY, [0, 1], [0, 100])}%,
-    rgba(255,255,255,0.4) 0%,
+    rgba(255,255,255,0.35) 0%,
     rgba(255,255,255,0) 60%
   )`;
 
@@ -363,61 +349,68 @@ function StepCard({ step, isEven }: { step: (typeof STEPS)[number]; isEven: bool
     mouseY.set(0.5);
   };
 
-  // Desktop alternates the seal's clipped corner left/right; on mobile the
-  // card is always left-aligned to the timeline, so it should always read
-  // as the same "left" cut regardless of index — otherwise every other
-  // card looks visually broken once the layout collapses to one column.
-  const clipCorner = isEven
-    ? "polygon(0 0, 100% 0, 100% 100%, 36px 100%, 0 calc(100% - 36px))"
-    : "polygon(36px 0, 100% 0, 100% calc(100% - 36px), calc(100% - 36px) 100%, 0 100%, 0 36px)";
-  const clipCornerMobile = "polygon(0 0, 100% 0, 100% 100%, 36px 100%, 0 calc(100% - 36px))";
-
   return (
     <motion.div
       ref={cardRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       style={reduceMotion ? {} : { rotateX: tiltX, rotateY: tiltY, transformStyle: "preserve-3d" }}
-      className="relative z-10 w-full [perspective:1200px] cursor-crosshair"
+      whileHover={reduceMotion ? {} : { scale: 1.015 }}
+      transition={{ type: "spring", stiffness: 300, damping: 25 }}
+      className="group relative w-full min-w-0 [perspective:1200px] cursor-pointer"
     >
       <div
-        className="group relative pt-20 pb-12 px-8 sm:pt-24 sm:pb-14 sm:px-12 bg-[#FFFCF8] overflow-hidden"
+        className="relative w-full overflow-hidden rounded-[1.75rem] sm:rounded-[2rem] bg-[#FFFCF8]"
         style={{
-          clipPath: `var(--clip-mobile, ${clipCornerMobile})`,
-          boxShadow: `0 20px 50px -12px ${accentColor}25, 0 4px 15px -4px rgba(0,0,0,0.08)`,
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E")`,
+          boxShadow: `0 24px 60px -16px ${accentColor}30, 0 6px 18px -6px rgba(0,0,0,0.12)`,
         }}
       >
-        <style>{`@media (min-width: 768px) { .step-card-${step.step} { clip-path: ${clipCorner} !important; } }`}</style>
+        {/* Ornate double frame, echoing the wax-seal motif used elsewhere in the section */}
+        <div
+          className="absolute inset-2 sm:inset-3 z-20 rounded-2xl border border-white/70 pointer-events-none"
+          aria-hidden="true"
+        />
+        <div
+          className="absolute inset-3 sm:inset-4 z-20 rounded-xl border border-dashed border-white/40 pointer-events-none"
+          aria-hidden="true"
+        />
 
+        {/* Responsive image — aspect-ratio locked to the source file's real dimensions */}
+        <div
+          className="relative w-full"
+          style={{ aspectRatio: `${step.imageWidth} / ${step.imageHeight}` }}
+        >
+          <Image
+            src={step.image}
+            alt={step.title}
+            fill
+            sizes="(max-width: 640px) 78vw, (max-width: 768px) 82vw, (max-width: 1024px) 42vw, 460px"
+            className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+            priority={step.step === "01"}
+          />
+        </div>
+
+        {/* Subtle gold ring on hover */}
+        <div
+          className="absolute inset-0 z-30 rounded-[1.75rem] sm:rounded-[2rem] ring-1 ring-inset ring-white/10 group-hover:ring-2 transition-all duration-500 pointer-events-none"
+          style={{ boxShadow: `inset 0 0 0 1px ${accentColor}20` }}
+          aria-hidden="true"
+        />
+
+        {/* Mouse-tracked sheen */}
         {!reduceMotion && (
           <motion.div
-            className="absolute inset-0 z-20 pointer-events-none mix-blend-overlay transition-opacity duration-300 opacity-0 group-hover:opacity-100"
+            className="absolute inset-0 z-30 pointer-events-none mix-blend-overlay opacity-0 group-hover:opacity-100 transition-opacity duration-300"
             style={{ background: sheenGradient }}
             aria-hidden="true"
           />
         )}
-
-        <div className="absolute inset-2 border border-[#E5DFD3]/80 pointer-events-none" aria-hidden="true" />
-        <div className="absolute inset-3 border border-dashed border-[#E5DFD3]/80 pointer-events-none" aria-hidden="true" />
-
-        <div className="relative z-30 flex flex-col items-center text-center gap-6" style={{ transform: "translateZ(40px)" }}>
-          <div className="relative -mt-16 transition-transform duration-500 group-hover:-translate-y-2">
-            <SealMedallion icon={step.icon} accentColor={accentColor} />
-          </div>
-
-          <div className="space-y-4 max-w-sm">
-            <h3 className="font-serif text-3xl font-semibold text-[#1a2540] tracking-tight">{step.title}</h3>
-            <p className="text-[#5a657c] leading-relaxed text-sm sm:text-[0.95rem]">{step.description}</p>
-          </div>
-
-          <div className="flex items-center gap-3 w-full max-w-[10rem] opacity-70 mt-2" aria-hidden="true">
-            <span className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-[#A6193C]" />
-            <span className="w-1.5 h-1.5 rotate-45" style={{ backgroundColor: accentColor }} />
-            <span className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-[#A6193C]" />
-          </div>
-        </div>
       </div>
+
+      {/* Decorative gradient id anchor (kept for parity with SVG defs elsewhere; unused visually) */}
+      <span className="sr-only" aria-hidden="true">
+        {gradId}
+      </span>
     </motion.div>
   );
 }
@@ -521,11 +514,11 @@ export function HowItWorksSection() {
             <DiyaIcon lit={diyaLit} />
           </div>
 
-          <ol className="space-y-24 md:space-y-40 pt-16 list-none">
+          <ol className="space-y-16 md:space-y-32 pt-16 list-none">
             {STEPS.map((step, index) => {
               const isEven = index % 2 === 0;
               return (
-                <li key={step.step} className="relative flex items-center w-full">
+                <li key={step.step} className="relative flex items-center w-full min-w-0">
                   <div className="absolute left-[36px] md:left-1/2 -translate-x-1/2 z-20">
                     <MarigoldNode number={step.step} accent={step.accent} />
                   </div>
@@ -535,9 +528,9 @@ export function HowItWorksSection() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: "-150px" }}
                     transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                    className={`w-full pl-[96px] md:pl-0 md:w-[calc(50%-6rem)] ${isEven ? "md:mr-auto" : "md:ml-auto"} step-card-${step.step}`}
+                    className={`w-full min-w-0 pl-20 sm:pl-24 md:pl-0 md:w-[calc(50%-6rem)] ${isEven ? "md:mr-auto" : "md:ml-auto"}`}
                   >
-                    <StepCard step={step} isEven={isEven} />
+                    <StepCard step={step} />
                   </motion.div>
                 </li>
               );
