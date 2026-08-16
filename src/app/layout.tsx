@@ -7,6 +7,7 @@ import { Toaster } from "react-hot-toast";
 import { JsonLd } from "@/components/shared/JsonLd";
 import { organizationSchema, websiteSchema } from "@/lib/seo/schema";
 import { siteConfig } from "@/lib/seo/config";
+import Preloader from "@/components/shared/Preloader";
 
 // ─── Font Optimization ─────────────────────────────────────────────
 // Next.js automatically self-hosts these fonts, preventing layout shifts
@@ -127,6 +128,13 @@ export default function RootLayout({
       <body 
         className={`${inter.variable} ${cormorant.variable} antialiased bg-[#FAF6EF] text-[#1a2233] min-h-screen flex flex-col`}
       >
+        {/* Full-site splash screen. Lives at the top of the tree so it
+            overlays everything (including Providers) immediately on first
+            paint. Because RootLayout stays mounted across client-side route
+            changes in the App Router, this only ever appears once per
+            hard/full page load — not on in-app navigation. */}
+        <Preloader />
+
         {/* Google Tag Manager (noscript fallback) — only rendered once
             NEXT_PUBLIC_GTM_ID is set. See src/lib/seo/config.ts. */}
         {siteConfig.gtmContainerId && (
