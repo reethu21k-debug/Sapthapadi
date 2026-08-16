@@ -332,6 +332,34 @@ function SevenVowsSection() {
 }
 
 // ─── Clean Editorial Love Story Showcase ───────────────────────
+// love-6 / love-9 are plain photos, so the section overlays its own
+// gradient + caption on them. love-18 / love-19 already have their
+// headline, tagline, and CTA baked into the artwork by the designer,
+// so those two render as clean framed cards with NO overlay — adding
+// the code's caption on top would double up the messaging.
+
+const LOVE_STORIES = [
+  {
+    image: "/Love/love-6.png",
+    alt: "A radiant couple celebrating their union during traditional festivities",
+    caption: "Some bonds are written on hearts",
+  },
+  {
+    image: "/Love/love-9.png",
+    alt: "A couple taking their sacred steps together",
+    caption: "Find your partner, for a lifetime of togetherness",
+  },
+  {
+    image: "/Love/love-18.png",
+    alt: "Saptapadi couple portrait — find your forever, rooted in tradition, bound by trust",
+    caption: null,
+  },
+  {
+    image: "/Love/love-19.png",
+    alt: "Saptapadi couple portrait — where traditions connect and hearts find their forever",
+    caption: null,
+  },
+] as const;
 
 function LoveStorySection() {
   return (
@@ -353,51 +381,39 @@ function LoveStorySection() {
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 max-w-5xl mx-auto">
-          {/* Card 1 */}
-          <ScrollReveal variant="scale-in" duration={800}>
-            <figure className="group relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 hover:border-[#C9982D]/40 transition-all duration-700 m-0 bg-[#1a080a]">
-              <div className="relative w-full aspect-[1086/1449]">
-                <Image
-                  src="/Love/love-6.png"
-                  alt="A radiant couple celebrating their union during traditional festivities"
-                  fill
-                  sizes="(max-width: 768px) 92vw, 500px"
-                  className="object-contain group-hover:scale-[1.03] transition-transform duration-1000 ease-out"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#1a080a] via-[#1a080a]/40 to-transparent opacity-90 group-hover:opacity-70 transition-opacity duration-700 pointer-events-none" />
-              </div>
+          {LOVE_STORIES.map((story, i) => (
+            <ScrollReveal
+              key={story.image}
+              variant="scale-in"
+              duration={800}
+              delay={i * 120}
+              className={i % 2 === 1 ? "md:mt-16" : undefined}
+            >
+              <figure className="group relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 hover:border-[#C9982D]/40 transition-all duration-700 m-0 bg-[#1a080a]">
+                <div className="relative w-full aspect-[1086/1449]">
+                  <Image
+                    src={story.image}
+                    alt={story.alt}
+                    fill
+                    sizes="(max-width: 768px) 92vw, 500px"
+                    className="object-contain group-hover:scale-[1.03] transition-transform duration-1000 ease-out"
+                  />
+                  {story.caption && (
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#1a080a] via-[#1a080a]/40 to-transparent opacity-90 group-hover:opacity-70 transition-opacity duration-700 pointer-events-none" />
+                  )}
+                </div>
 
-              <figcaption className="absolute inset-x-0 bottom-0 p-6 sm:p-8 translate-y-2 group-hover:translate-y-0 transition-transform duration-700 ease-out flex flex-col items-center text-center">
-                <span className="w-8 h-px bg-[#C9982D] mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-700 delay-100" />
-                <p className="text-[#F7EFE1] font-serif text-lg sm:text-xl md:text-2xl font-medium tracking-wide leading-snug">
-                  Some bonds are written on hearts
-                </p>
-              </figcaption>
-            </figure>
-          </ScrollReveal>
-
-          {/* Card 2 */}
-          <ScrollReveal variant="scale-in" duration={800} delay={150} className="md:mt-16">
-            <figure className="group relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 hover:border-[#C9982D]/40 transition-all duration-700 m-0 bg-[#1a080a]">
-              <div className="relative w-full aspect-[1086/1449]">
-                <Image
-                  src="/Love/love-9.png"
-                  alt="A couple taking their sacred steps together"
-                  fill
-                  sizes="(max-width: 768px) 92vw, 500px"
-                  className="object-contain group-hover:scale-[1.03] transition-transform duration-1000 ease-out"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#1a080a] via-[#1a080a]/40 to-transparent opacity-90 group-hover:opacity-70 transition-opacity duration-700 pointer-events-none" />
-              </div>
-
-              <figcaption className="absolute inset-x-0 bottom-0 p-6 sm:p-8 translate-y-2 group-hover:translate-y-0 transition-transform duration-700 ease-out flex flex-col items-center text-center">
-                <span className="w-8 h-px bg-[#C9982D] mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-700 delay-100" />
-                <p className="text-[#F7EFE1] font-serif text-lg sm:text-xl md:text-2xl font-medium tracking-wide leading-snug">
-                  Find your partner, for a lifetime of togetherness
-                </p>
-              </figcaption>
-            </figure>
-          </ScrollReveal>
+                {story.caption && (
+                  <figcaption className="absolute inset-x-0 bottom-0 p-6 sm:p-8 translate-y-2 group-hover:translate-y-0 transition-transform duration-700 ease-out flex flex-col items-center text-center">
+                    <span className="w-8 h-px bg-[#C9982D] mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-700 delay-100" />
+                    <p className="text-[#F7EFE1] font-serif text-lg sm:text-xl md:text-2xl font-medium tracking-wide leading-snug">
+                      {story.caption}
+                    </p>
+                  </figcaption>
+                )}
+              </figure>
+            </ScrollReveal>
+          ))}
         </div>
       </div>
     </section>

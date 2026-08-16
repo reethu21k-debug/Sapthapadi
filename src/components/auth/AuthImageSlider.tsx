@@ -6,6 +6,10 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const SLIDE_IMAGES = [
   {
+    src: "/Love/love-17.png",
+    alt: "A bride ready for her journey to find her life partner with Saptapadi",
+  },
+  {
     src: "/Love/love-1.png",
     alt: "A bride ready for her journey to find her life partner with Saptapadi",
   },
@@ -37,9 +41,16 @@ export function AuthImageSlider() {
   }, []);
 
   return (
-    <div className="relative w-full h-full flex flex-col items-center justify-center p-6 lg:p-12">
-      {/* Image Container — locked to the source 1085:1449 portrait ratio */}
-      <div className="relative w-full max-w-[500px] aspect-[1085/1449] flex items-center justify-center">
+    <div className="relative w-full h-full lg:flex lg:flex-col lg:items-center lg:justify-center lg:p-12">
+      {/*
+        Mobile/tablet: object-contain guarantees the full image is ALWAYS visible,
+        never cropped, on any screen shape. When the banner's aspect ratio matches
+        the image (the normal portrait-phone case), object-contain fills the box
+        edge-to-edge with no visible gap — it only letterboxes on the rare
+        short/landscape viewports where the container had to be height-capped.
+        Desktop (lg+): unchanged — centered, width-bound, object-contain box.
+      */}
+      <div className="absolute inset-0 lg:relative lg:w-full lg:max-w-[500px] lg:aspect-[1085/1449] lg:mx-auto">
         {SLIDE_IMAGES.map((image, index) => (
           <div
             key={image.src}
@@ -55,41 +66,44 @@ export function AuthImageSlider() {
               fill
               priority={index === 0}
               sizes="(max-width: 1024px) 100vw, 50vw"
-              className="object-contain drop-shadow-2xl"
+              className="object-contain object-center drop-shadow-2xl"
             />
           </div>
         ))}
-
-        {/* Navigation Arrow - Left */}
-        <button
-          onClick={prevSlide}
-          aria-label="Previous image"
-          className="absolute -left-4 sm:left-2 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-navy-dark/70 hover:bg-navy-dark text-white border border-white/20 shadow-luxury backdrop-blur-md transition-all hover:scale-105 group"
-        >
-          <ChevronLeft className="w-6 h-6 text-gold group-hover:text-gold-light transition-colors" />
-        </button>
-
-        {/* Navigation Arrow - Right */}
-        <button
-          onClick={nextSlide}
-          aria-label="Next image"
-          className="absolute -right-4 sm:right-2 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-navy-dark/70 hover:bg-navy-dark text-white border border-white/20 shadow-luxury backdrop-blur-md transition-all hover:scale-105 group"
-        >
-          <ChevronRight className="w-6 h-6 text-gold group-hover:text-gold-light transition-colors" />
-        </button>
       </div>
 
-      {/* Slide Indicators (Dots) */}
-      <div className="flex items-center gap-3 mt-6 z-10">
+      {/* Gradient fade so the banner blends into the page below it (mobile/tablet only) */}
+      <div className="absolute inset-x-0 bottom-0 h-20 sm:h-24 bg-gradient-to-t from-black/80 via-black/30 to-transparent lg:hidden pointer-events-none" />
+
+      {/* Navigation Arrow - Left */}
+      <button
+        onClick={prevSlide}
+        aria-label="Previous image"
+        className="absolute left-2 sm:left-3 lg:left-2 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-3 rounded-full bg-navy-dark/60 hover:bg-navy-dark text-white border border-white/20 shadow-luxury backdrop-blur-md transition-all hover:scale-105 group"
+      >
+        <ChevronLeft className="w-4 h-4 sm:w-6 sm:h-6 text-gold group-hover:text-gold-light transition-colors" />
+      </button>
+
+      {/* Navigation Arrow - Right */}
+      <button
+        onClick={nextSlide}
+        aria-label="Next image"
+        className="absolute right-2 sm:right-3 lg:right-2 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-3 rounded-full bg-navy-dark/60 hover:bg-navy-dark text-white border border-white/20 shadow-luxury backdrop-blur-md transition-all hover:scale-105 group"
+      >
+        <ChevronRight className="w-4 h-4 sm:w-6 sm:h-6 text-gold group-hover:text-gold-light transition-colors" />
+      </button>
+
+      {/* Slide Indicators (Dots) — overlaid on image on mobile/tablet, below it on desktop */}
+      <div className="absolute bottom-3 sm:bottom-4 left-0 right-0 lg:static lg:mt-6 flex items-center justify-center gap-2 sm:gap-3 z-10">
         {SLIDE_IMAGES.map((_, index) => (
           <button
             key={index}
             onClick={() => setCurrentIndex(index)}
             aria-label={`Go to slide ${index + 1}`}
-            className={`h-2.5 rounded-full transition-all duration-300 ${
+            className={`h-2 sm:h-2.5 rounded-full transition-all duration-300 ${
               index === currentIndex
-                ? "w-8 bg-gold shadow-gold"
-                : "w-2.5 bg-white/30 hover:bg-white/60"
+                ? "w-7 sm:w-8 bg-gold shadow-gold"
+                : "w-2 sm:w-2.5 bg-white/40 hover:bg-white/70"
             }`}
           />
         ))}
