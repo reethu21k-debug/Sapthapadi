@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 
 const BANNERS = [
+  "/Baneers/banner-16.png",
+  "/Baneers/banner-15.png",
   "/Baneers/banner-12.png",
   "/Baneers/banner-1.png",
   "/Baneers/banner-2.png",
