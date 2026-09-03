@@ -5,6 +5,10 @@ import { useCallback, useState, Fragment } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Filter, X, Search, MapPin, SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
+// Adjust this import path to wherever you place SearchableSelect.tsx in
+// your project (e.g. "@/components/admin/SearchableSelect" if it lives
+// alongside your other admin components).
+import { SearchableSelect } from "./SearchableSelect";
 
 const RELIGIONS = ["Hindu", "Muslim", "Christian", "Sikh", "Jain", "Buddhist", "Other"];
 const CASTES = ["Modollu (Modikallu)", "Namdarlu (Namdharis)"];
@@ -21,6 +25,12 @@ const AP_DISTRICTS = [
   "West Godavari", "YSR Kadapa",
 ];
 const OTHER_DISTRICT = "__other__";
+
+// Options for the Communities searchable dropdown, derived from CASTES the
+// same way the old <select> derived its option values (strip the
+// parenthetical alt-name so the stored filter value stays a clean string,
+// e.g. "Modollu" rather than "Modollu (Modikallu)").
+const CASTE_OPTIONS = CASTES.map((c) => ({ value: c.split(" (")[0], label: c }));
 
 export function ProfileFilters() {
   const router = useRouter();
@@ -175,16 +185,16 @@ export function ProfileFilters() {
           ))}
         </select>
 
-        <select
+        {/* Communities Filter — searchable/type-to-filter dropdown instead
+            of a native <select>, so typing narrows the list live rather
+            than relying on native browser type-ahead jump behavior. */}
+        <SearchableSelect
           value={searchParams.get("caste") || ""}
-          onChange={(e) => updateFilter("caste", e.target.value)}
-          className={getSelectClass("caste")}
-        >
-          <option value="">All Communities</option>
-          {CASTES.map((c) => (
-            <option key={c} value={c.split(" (")[0]}>{c}</option>
-          ))}
-        </select>
+          onChange={(v) => updateFilter("caste", v)}
+          options={CASTE_OPTIONS}
+          placeholder="All Communities"
+          active={isActive("caste")}
+        />
 
         <select
           value={searchParams.get("marital_status") || ""}
